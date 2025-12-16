@@ -1,0 +1,270 @@
+
+========================================
+Running benchmark:
+  Input tokens: 1000
+  Output tokens: 1000
+  Max concurrency: 256
+  Num prompts: 512
+  Resquest rate: inf
+  Started at: Mon Dec 15 12:25:32 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=256, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=512, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='qwen3_235b_a22b_instrct_2507_FP8_isl1000_osl1000_conc256_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=1000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 256
+  0%|          | 0/512 [00:00<?, ?it/s]  0%|          | 1/512 [00:35<5:00:18, 35.26s/it] 38%|███▊      | 195/512 [00:35<00:40,  7.85it/s] 50%|█████     | 256/512 [00:50<00:32,  7.85it/s] 50%|█████     | 257/512 [01:09<01:05,  3.89it/s]100%|██████████| 512/512 [01:09<00:00,  7.41it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     512       
+Benchmark duration (s):                  69.07     
+Total input tokens:                      512000    
+Total generated tokens:                  512000    
+Request throughput (req/s):              7.41      
+Output token throughput (tok/s):         7413.16   
+Total Token throughput (tok/s):          14826.32  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          3402.39   
+Median TTFT (ms):                        3454.51   
+P99 TTFT (ms):                           6100.37   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          31.12     
+Median TPOT (ms):                        31.18     
+P99 TPOT (ms):                           34.27     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           31.09     
+Median ITL (ms):                         15.89     
+P99 ITL (ms):                            73.92     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          34495.52  
+Median E2EL (ms):                        34520.14  
+P99 E2EL (ms):                           35325.46  
+==================================================
+
+Completed at: Mon Dec 15 12:26:59 UTC 2025
+========================================
+
+========================================
+Running benchmark:
+  Input tokens: 1000
+  Output tokens: 1000
+  Max concurrency: 128
+  Num prompts: 256
+  Resquest rate: inf
+  Started at: Mon Dec 15 12:27:02 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=128, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=256, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='qwen3_235b_a22b_instrct_2507_FP8_isl1000_osl1000_conc128_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=1000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 128
+  0%|          | 0/256 [00:00<?, ?it/s]  0%|          | 1/256 [00:20<1:27:24, 20.57s/it] 50%|█████     | 129/256 [00:41<00:34,  3.67it/s]100%|██████████| 256/256 [00:41<00:00,  6.21it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     256       
+Benchmark duration (s):                  41.23     
+Total input tokens:                      256000    
+Total generated tokens:                  256000    
+Request throughput (req/s):              6.21      
+Output token throughput (tok/s):         6208.70   
+Total Token throughput (tok/s):          12417.40  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          1826.05   
+Median TTFT (ms):                        1793.16   
+P99 TTFT (ms):                           2993.52   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          18.79     
+Median TPOT (ms):                        18.83     
+P99 TPOT (ms):                           20.26     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           18.77     
+Median ITL (ms):                         17.45     
+P99 ITL (ms):                            22.07     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          20595.06  
+Median E2EL (ms):                        20597.48  
+P99 E2EL (ms):                           20655.50  
+==================================================
+
+Completed at: Mon Dec 15 12:28:00 UTC 2025
+========================================
+
+========================================
+Running benchmark:
+  Input tokens: 4000
+  Output tokens: 1000
+  Max concurrency: 128
+  Num prompts: 256
+  Resquest rate: inf
+  Started at: Mon Dec 15 12:28:03 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=128, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=256, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='qwen3_235b_a22b_instrct_2507_FP8_isl4000_osl1000_conc128_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=4000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 128
+  0%|          | 0/256 [00:00<?, ?it/s]  0%|          | 1/256 [00:31<2:12:06, 31.08s/it] 50%|█████     | 129/256 [01:02<00:52,  2.43it/s]100%|██████████| 256/256 [01:02<00:00,  4.11it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     256       
+Benchmark duration (s):                  62.27     
+Total input tokens:                      1024000   
+Total generated tokens:                  256000    
+Request throughput (req/s):              4.11      
+Output token throughput (tok/s):         4110.91   
+Total Token throughput (tok/s):          20554.54  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          6565.94   
+Median TTFT (ms):                        6315.27   
+P99 TTFT (ms):                           11780.62  
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          24.57     
+Median TPOT (ms):                        24.82     
+P99 TPOT (ms):                           30.26     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           24.54     
+Median ITL (ms):                         19.07     
+P99 ITL (ms):                            23.59     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          31108.77  
+Median E2EL (ms):                        31104.07  
+P99 E2EL (ms):                           31177.58  
+==================================================
+
+Completed at: Mon Dec 15 12:29:26 UTC 2025
+========================================
+
+========================================
+Running benchmark:
+  Input tokens: 4000
+  Output tokens: 1000
+  Max concurrency: 64
+  Num prompts: 128
+  Resquest rate: inf
+  Started at: Mon Dec 15 12:29:29 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=64, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=128, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='qwen3_235b_a22b_instrct_2507_FP8_isl4000_osl1000_conc64_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=4000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 64
+  0%|          | 0/128 [00:00<?, ?it/s]  1%|          | 1/128 [00:23<49:52, 23.56s/it] 51%|█████     | 65/128 [00:47<00:38,  1.62it/s]100%|██████████| 128/128 [00:47<00:00,  2.72it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     128       
+Benchmark duration (s):                  47.11     
+Total input tokens:                      512000    
+Total generated tokens:                  128000    
+Request throughput (req/s):              2.72      
+Output token throughput (tok/s):         2717.25   
+Total Token throughput (tok/s):          13586.27  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          3330.00   
+Median TTFT (ms):                        3268.53   
+P99 TTFT (ms):                           5902.30   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          20.23     
+Median TPOT (ms):                        20.28     
+P99 TPOT (ms):                           22.96     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           20.21     
+Median ITL (ms):                         17.60     
+P99 ITL (ms):                            19.63     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          23536.82  
+Median E2EL (ms):                        23535.77  
+P99 E2EL (ms):                           23557.64  
+==================================================
+
+Completed at: Mon Dec 15 12:30:35 UTC 2025
+========================================
+
+========================================
+Running benchmark:
+  Input tokens: 10000
+  Output tokens: 1000
+  Max concurrency: 64
+  Num prompts: 128
+  Resquest rate: inf
+  Started at: Mon Dec 15 12:30:38 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=64, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=128, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='qwen3_235b_a22b_instrct_2507_FP8_isl10000_osl1000_conc64_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=10000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 64
+  0%|          | 0/128 [00:00<?, ?it/s]  1%|          | 1/128 [00:36<1:16:31, 36.15s/it] 51%|█████     | 65/128 [01:12<00:59,  1.05it/s] 100%|██████████| 128/128 [01:12<00:00,  1.77it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     128       
+Benchmark duration (s):                  72.32     
+Total input tokens:                      1280000   
+Total generated tokens:                  128000    
+Request throughput (req/s):              1.77      
+Output token throughput (tok/s):         1769.95   
+Total Token throughput (tok/s):          19469.42  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          8250.60   
+Median TTFT (ms):                        8282.84   
+P99 TTFT (ms):                           15581.57  
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          27.91     
+Median TPOT (ms):                        27.89     
+P99 TPOT (ms):                           35.18     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           27.89     
+Median ITL (ms):                         20.47     
+P99 ITL (ms):                            24.17     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          36136.11  
+Median E2EL (ms):                        36137.08  
+P99 E2EL (ms):                           36160.59  
+==================================================
+
+Completed at: Mon Dec 15 12:32:14 UTC 2025
+========================================
+
+========================================
+Running benchmark:
+  Input tokens: 10000
+  Output tokens: 1000
+  Max concurrency: 32
+  Num prompts: 64
+  Resquest rate: inf
+  Started at: Mon Dec 15 12:32:17 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=32, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=64, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='qwen3_235b_a22b_instrct_2507_FP8_isl10000_osl1000_conc32_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=10000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 32
+  0%|          | 0/64 [00:00<?, ?it/s]  2%|▏         | 1/64 [00:27<29:02, 27.66s/it] 52%|█████▏    | 33/64 [00:55<00:44,  1.44s/it]100%|██████████| 64/64 [00:55<00:00,  1.16it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     64        
+Benchmark duration (s):                  55.37     
+Total input tokens:                      640000    
+Total generated tokens:                  64000     
+Request throughput (req/s):              1.16      
+Output token throughput (tok/s):         1155.78   
+Total Token throughput (tok/s):          12713.53  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          4313.88   
+Median TTFT (ms):                        4306.91   
+P99 TTFT (ms):                           7839.92   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          23.38     
+Median TPOT (ms):                        23.39     
+P99 TPOT (ms):                           26.95     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           23.36     
+Median ITL (ms):                         19.81     
+P99 ITL (ms):                            21.14     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          27675.19  
+Median E2EL (ms):                        27674.62  
+P99 E2EL (ms):                           27711.46  
+==================================================
+
+Completed at: Mon Dec 15 12:33:35 UTC 2025
+========================================

@@ -1,0 +1,38 @@
+INFO 12-15 12:05:40 [__init__.py:241] Automatically detected platform rocm.
+[aiter] import [module_aiter_enum] under /usr/local/lib/python3.12/dist-packages/aiter/jit/module_aiter_enum.so
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7c5fd1b4ff60>, seed=123, num_prompts=320, dataset_name='random', no_stream=False, dataset_path=None, custom_output_len=256, custom_skip_chat_template=False, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=4000, random_output_len=1000, random_range_ratio=0.0, random_prefix_len=0, random_batch_size=1, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 0}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_output_len=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, endpoint_type='openai', label=None, backend='vllm', base_url=None, host='localhost', port=8899, endpoint='/v1/completions', max_concurrency=64, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=False, save_detailed=False, append_result=False, metadata=None, result_dir=None, result_filename=None, ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, request_id_prefix='benchmark-serving', top_p=None, top_k=None, min_p=None, temperature=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None, ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=600)
+INFO 12-15 12:05:42 [datasets.py:509] Sampling input_len from [4000, 4000] and output_len from [1000, 1000]
+Starting initial single prompt test run...
+Waiting for endpoint to become up in 600 seconds
+ |          | 00:00 elapsed, ? remaining |          | 00:00 elapsed, 00:04 remaining |          | 00:18 elapsed, 2369:32:08 remaining
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 64
+  0%|          | 0/320 [00:00<?, ?it/s]  0%|          | 1/320 [00:33<2:58:30, 33.57s/it]  3%|▎         | 10/320 [00:34<12:52,  2.49s/it]   8%|▊         | 25/320 [00:35<04:00,  1.23it/s] 13%|█▎        | 41/320 [00:35<01:58,  2.36it/s] 15%|█▌        | 49/320 [00:37<01:34,  2.88it/s] 18%|█▊        | 57/320 [00:37<01:13,  3.58it/s] 20%|██        | 64/320 [00:51<01:11,  3.58it/s] 20%|██        | 65/320 [01:07<05:21,  1.26s/it] 23%|██▎       | 74/320 [01:08<03:35,  1.14it/s] 26%|██▌       | 82/320 [01:08<02:36,  1.53it/s] 30%|███       | 97/320 [01:09<01:28,  2.53it/s] 35%|███▌      | 113/320 [01:10<00:53,  3.86it/s] 38%|███▊      | 121/320 [01:11<00:43,  4.53it/s] 40%|████      | 128/320 [01:21<00:42,  4.53it/s] 40%|████      | 129/320 [01:41<03:23,  1.06s/it] 43%|████▎     | 138/320 [01:41<02:21,  1.29it/s] 46%|████▌     | 146/320 [01:42<01:47,  1.63it/s] 50%|█████     | 161/320 [01:43<01:01,  2.60it/s] 55%|█████▌    | 177/320 [01:44<00:36,  3.90it/s] 58%|█████▊    | 185/320 [01:44<00:29,  4.57it/s] 60%|██████    | 192/320 [02:01<00:28,  4.57it/s] 60%|██████    | 193/320 [02:14<02:13,  1.05s/it] 63%|██████▎   | 202/320 [02:15<01:30,  1.30it/s] 66%|██████▌   | 210/320 [02:16<01:07,  1.64it/s] 70%|███████   | 225/320 [02:17<00:36,  2.61it/s] 75%|███████▌  | 241/320 [02:17<00:20,  3.91it/s] 78%|███████▊  | 249/320 [02:18<00:15,  4.56it/s] 80%|████████  | 256/320 [02:31<00:14,  4.56it/s] 80%|████████  | 257/320 [02:48<01:05,  1.04s/it] 83%|████████▎ | 266/320 [02:48<00:40,  1.32it/s] 90%|█████████ | 289/320 [02:48<00:11,  2.64it/s]100%|██████████| 320/320 [02:48<00:00,  1.90it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     320       
+Maximum request concurrency:             64        
+Benchmark duration (s):                  168.48    
+Total input tokens:                      1279310   
+Total generated tokens:                  320000    
+Request throughput (req/s):              1.90      
+Output token throughput (tok/s):         1899.34   
+Total Token throughput (tok/s):          9492.58   
+---------------Time to First Token----------------
+Mean TTFT (ms):                          2779.15   
+Median TTFT (ms):                        2733.40   
+P99 TTFT (ms):                           7234.43   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          30.92     
+Median TPOT (ms):                        31.10     
+P99 TPOT (ms):                           33.14     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           30.92     
+Median ITL (ms):                         26.66     
+P99 ITL (ms):                            27.77     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          33672.56  
+Median E2EL (ms):                        33752.07  
+P99 E2EL (ms):                           37779.86  
+==================================================

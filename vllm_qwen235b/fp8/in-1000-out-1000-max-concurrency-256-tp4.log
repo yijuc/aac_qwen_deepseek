@@ -1,0 +1,38 @@
+INFO 12-15 11:20:41 [__init__.py:241] Automatically detected platform rocm.
+[aiter] import [module_aiter_enum] under /usr/local/lib/python3.12/dist-packages/aiter/jit/module_aiter_enum.so
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x743c541c3f60>, seed=123, num_prompts=1280, dataset_name='random', no_stream=False, dataset_path=None, custom_output_len=256, custom_skip_chat_template=False, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=1000, random_output_len=1000, random_range_ratio=0.0, random_prefix_len=0, random_batch_size=1, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 0}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_output_len=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, endpoint_type='openai', label=None, backend='vllm', base_url=None, host='localhost', port=8899, endpoint='/v1/completions', max_concurrency=256, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=False, save_detailed=False, append_result=False, metadata=None, result_dir=None, result_filename=None, ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, request_id_prefix='benchmark-serving', top_p=None, top_k=None, min_p=None, temperature=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None, ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=600)
+INFO 12-15 11:20:44 [datasets.py:509] Sampling input_len from [1000, 1000] and output_len from [1000, 1000]
+Starting initial single prompt test run...
+Waiting for endpoint to become up in 600 seconds
+ |          | 00:00 elapsed, ? remaining |          | 00:00 elapsed, 00:05 remaining |          | 00:46 elapsed, 7094:42:23 remaining
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 256
+  0%|          | 0/1280 [00:00<?, ?it/s]  0%|          | 1/1280 [00:54<19:18:53, 54.37s/it]  0%|          | 2/1280 [00:55<8:05:39, 22.80s/it]   2%|▏         | 26/1280 [00:55<22:35,  1.08s/it]   3%|▎         | 41/1280 [00:55<12:10,  1.70it/s]  5%|▌         | 67/1280 [00:56<05:51,  3.46it/s]  8%|▊         | 100/1280 [00:57<03:20,  5.87it/s] 10%|█         | 133/1280 [00:59<02:18,  8.26it/s] 13%|█▎        | 165/1280 [01:00<01:42, 10.92it/s] 15%|█▌        | 198/1280 [01:01<01:19, 13.67it/s] 18%|█▊        | 231/1280 [01:03<01:04, 16.17it/s] 20%|██        | 256/1280 [01:13<01:03, 16.17it/s] 20%|██        | 257/1280 [01:50<09:16,  1.84it/s] 20%|██        | 258/1280 [01:51<09:12,  1.85it/s] 21%|██        | 263/1280 [01:51<08:21,  2.03it/s] 25%|██▌       | 323/1280 [01:51<03:02,  5.25it/s] 30%|███       | 388/1280 [01:52<01:35,  9.34it/s] 33%|███▎      | 420/1280 [01:54<01:19, 10.88it/s] 35%|███▌      | 453/1280 [01:55<01:04, 12.92it/s] 38%|███▊      | 486/1280 [01:56<00:52, 15.06it/s] 40%|████      | 512/1280 [02:13<00:51, 15.06it/s] 40%|████      | 513/1280 [02:46<06:23,  2.00it/s] 40%|████      | 514/1280 [02:46<06:20,  2.01it/s] 41%|████      | 519/1280 [02:46<05:50,  2.17it/s] 43%|████▎     | 551/1280 [02:47<03:15,  3.72it/s] 48%|████▊     | 611/1280 [02:49<01:33,  7.17it/s] 53%|█████▎    | 677/1280 [02:50<00:51, 11.80it/s] 55%|█████▌    | 709/1280 [02:51<00:41, 13.79it/s] 58%|█████▊    | 742/1280 [02:52<00:34, 15.73it/s] 60%|██████    | 768/1280 [03:03<00:32, 15.73it/s] 60%|██████    | 769/1280 [03:41<04:02,  2.11it/s] 60%|██████    | 770/1280 [03:42<04:00,  2.12it/s] 61%|██████    | 775/1280 [03:42<03:41,  2.28it/s] 63%|██████▎   | 807/1280 [03:42<02:01,  3.90it/s] 66%|██████▌   | 839/1280 [03:43<01:17,  5.71it/s] 70%|███████   | 899/1280 [03:45<00:38,  9.83it/s] 75%|███████▌  | 964/1280 [03:46<00:20, 15.13it/s] 78%|███████▊  | 997/1280 [03:48<00:16, 17.22it/s] 80%|████████  | 1024/1280 [04:03<00:14, 17.22it/s] 80%|████████  | 1025/1280 [04:37<01:53,  2.24it/s] 80%|████████  | 1026/1280 [04:37<01:52,  2.26it/s] 81%|████████  | 1031/1280 [04:38<01:42,  2.42it/s] 86%|████████▌ | 1095/1280 [04:38<00:32,  5.71it/s] 93%|█████████▎| 1187/1280 [04:38<00:07, 12.41it/s]100%|██████████| 1280/1280 [04:38<00:00,  4.60it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     1280      
+Maximum request concurrency:             256       
+Benchmark duration (s):                  278.45    
+Total input tokens:                      1277870   
+Total generated tokens:                  1280000   
+Request throughput (req/s):              4.60      
+Output token throughput (tok/s):         4596.85   
+Total Token throughput (tok/s):          9186.05   
+---------------Time to First Token----------------
+Mean TTFT (ms):                          4416.92   
+Median TTFT (ms):                        4154.11   
+P99 TTFT (ms):                           10950.40  
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          51.29     
+Median TPOT (ms):                        51.62     
+P99 TPOT (ms):                           55.14     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           51.29     
+Median ITL (ms):                         44.43     
+P99 ITL (ms):                            48.87     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          55654.01  
+Median E2EL (ms):                        55585.37  
+P99 E2EL (ms):                           63051.07  
+==================================================

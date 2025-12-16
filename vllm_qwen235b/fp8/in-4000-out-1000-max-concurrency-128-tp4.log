@@ -1,0 +1,38 @@
+INFO 12-15 11:29:53 [__init__.py:241] Automatically detected platform rocm.
+[aiter] import [module_aiter_enum] under /usr/local/lib/python3.12/dist-packages/aiter/jit/module_aiter_enum.so
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7f38d25bff60>, seed=123, num_prompts=640, dataset_name='random', no_stream=False, dataset_path=None, custom_output_len=256, custom_skip_chat_template=False, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=4000, random_output_len=1000, random_range_ratio=0.0, random_prefix_len=0, random_batch_size=1, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 0}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_output_len=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, endpoint_type='openai', label=None, backend='vllm', base_url=None, host='localhost', port=8899, endpoint='/v1/completions', max_concurrency=128, model='/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969', tokenizer=None, use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=False, save_detailed=False, append_result=False, metadata=None, result_dir=None, result_filename=None, ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, request_id_prefix='benchmark-serving', top_p=None, top_k=None, min_p=None, temperature=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None, ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=600)
+INFO 12-15 11:29:56 [datasets.py:509] Sampling input_len from [4000, 4000] and output_len from [1000, 1000]
+Starting initial single prompt test run...
+Waiting for endpoint to become up in 600 seconds
+ |          | 00:00 elapsed, ? remaining |          | 00:00 elapsed, 00:04 remaining |          | 00:19 elapsed, 2570:01:27 remaining
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 128
+  0%|          | 0/640 [00:00<?, ?it/s]  0%|          | 1/640 [00:55<9:47:56, 55.21s/it]  2%|▏         | 10/640 [00:55<41:56,  4.00s/it]   3%|▎         | 19/640 [00:55<17:57,  1.74s/it]  5%|▌         | 34/640 [00:56<07:58,  1.27it/s]  7%|▋         | 42/640 [00:58<06:07,  1.63it/s]  8%|▊         | 51/640 [01:00<04:31,  2.17it/s]  9%|▉         | 59/640 [01:01<03:38,  2.66it/s] 10%|█         | 67/640 [01:02<02:59,  3.19it/s] 12%|█▏        | 75/640 [01:04<02:32,  3.70it/s] 13%|█▎        | 83/640 [01:05<02:13,  4.18it/s] 14%|█▍        | 92/640 [01:06<01:54,  4.77it/s] 16%|█▌        | 100/640 [01:08<01:46,  5.06it/s] 17%|█▋        | 108/640 [01:09<01:40,  5.29it/s] 18%|█▊        | 116/640 [01:10<01:35,  5.50it/s] 19%|█▉        | 124/640 [01:12<01:31,  5.65it/s] 20%|██        | 129/640 [01:51<15:06,  1.77s/it] 22%|██▏       | 138/640 [01:51<09:45,  1.17s/it] 24%|██▍       | 154/640 [01:52<05:19,  1.52it/s] 27%|██▋       | 170/640 [01:54<03:20,  2.34it/s] 28%|██▊       | 178/640 [01:55<02:55,  2.63it/s] 29%|██▉       | 186/640 [01:57<02:29,  3.04it/s] 30%|███       | 195/640 [01:58<02:03,  3.60it/s] 32%|███▏      | 203/640 [01:59<01:48,  4.01it/s] 33%|███▎      | 211/640 [02:01<01:37,  4.40it/s] 34%|███▍      | 219/640 [02:02<01:28,  4.77it/s] 35%|███▌      | 227/640 [02:03<01:21,  5.08it/s] 37%|███▋      | 235/640 [02:05<01:15,  5.33it/s] 38%|███▊      | 244/640 [02:06<01:09,  5.73it/s] 39%|███▉      | 252/640 [02:07<01:06,  5.83it/s] 40%|████      | 257/640 [02:46<11:04,  1.73s/it] 42%|████▏     | 266/640 [02:47<07:10,  1.15s/it] 44%|████▍     | 282/640 [02:49<03:58,  1.50it/s] 47%|████▋     | 298/640 [02:50<02:28,  2.30it/s] 48%|████▊     | 306/640 [02:51<02:04,  2.67it/s] 49%|████▉     | 314/640 [02:53<01:45,  3.08it/s] 50%|█████     | 322/640 [02:54<01:30,  3.52it/s] 52%|█████▏    | 331/640 [02:55<01:15,  4.09it/s] 53%|█████▎    | 339/640 [02:57<01:07,  4.47it/s] 54%|█████▍    | 347/640 [02:58<01:00,  4.82it/s] 55%|█████▌    | 355/640 [02:59<00:55,  5.10it/s] 57%|█████▋    | 363/640 [03:01<00:51,  5.35it/s] 58%|█████▊    | 371/640 [03:02<00:48,  5.53it/s] 59%|█████▉    | 380/640 [03:03<00:44,  5.89it/s] 60%|██████    | 385/640 [03:42<07:17,  1.71s/it] 62%|██████▏   | 394/640 [03:43<04:40,  1.14s/it] 63%|██████▎   | 402/640 [03:44<03:21,  1.18it/s] 65%|██████▌   | 418/640 [03:46<01:52,  1.98it/s] 68%|██████▊   | 434/640 [03:47<01:09,  2.95it/s] 69%|██████▉   | 442/640 [03:49<01:01,  3.22it/s] 70%|███████   | 450/640 [03:50<00:52,  3.63it/s] 72%|███████▏  | 459/640 [03:52<00:43,  4.16it/s] 73%|███████▎  | 467/640 [03:53<00:38,  4.50it/s] 74%|███████▍  | 475/640 [03:54<00:34,  4.81it/s] 75%|███████▌  | 483/640 [03:56<00:30,  5.12it/s] 77%|███████▋  | 491/640 [03:57<00:27,  5.34it/s] 78%|███████▊  | 499/640 [03:58<00:25,  5.51it/s] 79%|███████▉  | 508/640 [04:00<00:22,  5.84it/s] 80%|████████  | 513/640 [04:39<03:37,  1.71s/it] 82%|████████▏ | 522/640 [04:39<02:13,  1.13s/it] 84%|████████▍ | 539/640 [04:39<00:59,  1.69it/s] 89%|████████▉ | 570/640 [04:39<00:18,  3.77it/s] 94%|█████████▍| 603/640 [04:39<00:05,  6.87it/s]100%|██████████| 640/640 [04:39<00:00,  2.29it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     640       
+Maximum request concurrency:             128       
+Benchmark duration (s):                  279.67    
+Total input tokens:                      2557681   
+Total generated tokens:                  640000    
+Request throughput (req/s):              2.29      
+Output token throughput (tok/s):         2288.44   
+Total Token throughput (tok/s):          11433.92  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          6134.91   
+Median TTFT (ms):                        5324.75   
+P99 TTFT (ms):                           20094.00  
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          49.80     
+Median TPOT (ms):                        50.65     
+P99 TPOT (ms):                           54.74     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           49.80     
+Median ITL (ms):                         34.47     
+P99 ITL (ms):                            1299.84   
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          55882.69  
+Median E2EL (ms):                        55905.43  
+P99 E2EL (ms):                           70717.44  
+==================================================
