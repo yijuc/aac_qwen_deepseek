@@ -1,0 +1,2 @@
+Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput
+10000,1000,128,1280,18636.03,0.00,6095.31

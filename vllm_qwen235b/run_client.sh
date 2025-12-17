@@ -10,6 +10,7 @@
 TP=8  # or TP=4
 # ========================
 
+unset HIP_VISIBLE_DEVICES
 if [ "$TP" = "8" ]; then
     export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 elif [ "$TP" = "4" ]; then

@@ -1,0 +1,45 @@
+
+========================================
+Running benchmark:
+  Input tokens: 10000
+  Output tokens: 1000
+  Max concurrency: 32
+  Num prompts: 320
+  Resquest rate: inf
+  Started at: Wed Dec 17 07:32:48 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=32, model='/shared/amdgpu/home/share/deepseek/DeepSeek-R1', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=320, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='deepseek_r1_FP8_tp8_isl10000_osl1000_conc32_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=10000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 32
+  0%|          | 0/320 [00:00<?, ?it/s]  0%|          | 1/320 [00:27<2:27:21, 27.72s/it] 10%|█         | 33/320 [00:55<06:52,  1.44s/it]  20%|██        | 65/320 [01:22<04:40,  1.10s/it] 30%|███       | 97/320 [01:50<03:41,  1.00it/s] 40%|████      | 129/320 [02:18<03:00,  1.06it/s] 50%|█████     | 161/320 [02:46<02:26,  1.09it/s] 60%|██████    | 193/320 [03:13<01:54,  1.11it/s] 70%|███████   | 225/320 [03:41<01:24,  1.13it/s] 80%|████████  | 257/320 [04:09<00:55,  1.14it/s] 90%|█████████ | 289/320 [04:36<00:27,  1.14it/s]100%|██████████| 320/320 [04:36<00:00,  1.16it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     320       
+Benchmark duration (s):                  276.73    
+Total input tokens:                      3200000   
+Total generated tokens:                  320000    
+Request throughput (req/s):              1.16      
+Output token throughput (tok/s):         1156.38   
+Total Token throughput (tok/s):          12720.14  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          4902.27   
+Median TTFT (ms):                        4917.08   
+P99 TTFT (ms):                           9332.59   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          22.78     
+Median TPOT (ms):                        22.79     
+P99 TPOT (ms):                           27.11     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           22.76     
+Median ITL (ms):                         18.27     
+P99 ITL (ms):                            20.64     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          27660.41  
+Median E2EL (ms):                        27612.17  
+P99 E2EL (ms):                           28013.34  
+==================================================
+
+Completed at: Wed Dec 17 07:37:46 UTC 2025
+========================================

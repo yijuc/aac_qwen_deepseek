@@ -1,0 +1,154 @@
+
+========================================
+Running benchmark:
+  Input tokens: 4000
+  Output tokens: 1000
+  Max concurrency: 64
+  Num prompts: 640
+  Resquest rate: inf
+  Started at: Wed Dec 17 04:29:50 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=64, model='/shared/amdgpu/home/share/deepseek/DeepSeek-R1', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=640, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='deepseek_r1_FP8_tp8_isl4000_osl1000_conc64_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=4000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 64
+  0%|          | 0/640 [00:00<?, ?it/s]  0%|          | 1/640 [00:26<4:40:52, 26.37s/it] 10%|█         | 65/640 [00:52<06:38,  1.44it/s]  20%|██        | 129/640 [01:19<04:29,  1.89it/s] 30%|███       | 193/640 [01:45<03:33,  2.09it/s] 40%|████      | 257/640 [02:12<02:53,  2.21it/s] 50%|█████     | 321/640 [02:39<02:20,  2.26it/s] 60%|██████    | 385/640 [03:05<01:50,  2.31it/s] 70%|███████   | 449/640 [03:32<01:21,  2.34it/s] 80%|████████  | 513/640 [03:59<00:54,  2.35it/s] 90%|█████████ | 577/640 [04:26<00:26,  2.36it/s]100%|██████████| 640/640 [04:26<00:00,  2.40it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     640       
+Benchmark duration (s):                  266.34    
+Total input tokens:                      2560000   
+Total generated tokens:                  640000    
+Request throughput (req/s):              2.40      
+Output token throughput (tok/s):         2402.96   
+Total Token throughput (tok/s):          12014.81  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          3748.11   
+Median TTFT (ms):                        3752.01   
+P99 TTFT (ms):                           6820.09   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          22.89     
+Median TPOT (ms):                        22.92     
+P99 TPOT (ms):                           26.44     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           22.87     
+Median ITL (ms):                         19.65     
+P99 ITL (ms):                            21.81     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          26618.14  
+Median E2EL (ms):                        26564.49  
+P99 E2EL (ms):                           27148.64  
+==================================================
+
+Completed at: Wed Dec 17 04:34:36 UTC 2025
+========================================
+
+========================================
+Running benchmark:
+  Input tokens: 4000
+  Output tokens: 1000
+  Max concurrency: 128
+  Num prompts: 1280
+  Resquest rate: inf
+  Started at: Wed Dec 17 04:34:39 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=128, model='/shared/amdgpu/home/share/deepseek/DeepSeek-R1', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=1280, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='deepseek_r1_FP8_tp8_isl4000_osl1000_conc128_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=4000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 128
+  0%|          | 0/1280 [00:00<?, ?it/s]  0%|          | 1/1280 [00:38<13:39:39, 38.45s/it] 10%|█         | 129/1280 [01:16<09:41,  1.98it/s]  20%|██        | 257/1280 [01:54<06:30,  2.62it/s] 30%|███       | 385/1280 [02:33<05:12,  2.87it/s] 40%|████      | 513/1280 [03:12<04:12,  3.04it/s] 50%|█████     | 641/1280 [03:50<03:23,  3.13it/s] 60%|██████    | 769/1280 [04:29<02:40,  3.18it/s] 70%|███████   | 897/1280 [05:07<01:58,  3.24it/s] 80%|████████  | 1025/1280 [05:46<01:18,  3.26it/s] 90%|█████████ | 1153/1280 [06:25<00:38,  3.28it/s]100%|██████████| 1280/1280 [06:25<00:00,  3.32it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     1280      
+Benchmark duration (s):                  385.25    
+Total input tokens:                      5120000   
+Total generated tokens:                  1280000   
+Request throughput (req/s):              3.32      
+Output token throughput (tok/s):         3322.48   
+Total Token throughput (tok/s):          16612.38  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          7157.99   
+Median TTFT (ms):                        7096.88   
+P99 TTFT (ms):                           13521.54  
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          31.36     
+Median TPOT (ms):                        31.39     
+P99 TPOT (ms):                           38.07     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           31.33     
+Median ITL (ms):                         24.62     
+P99 ITL (ms):                            29.01     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          38490.57  
+Median E2EL (ms):                        38444.01  
+P99 E2EL (ms):                           39580.00  
+==================================================
+
+Completed at: Wed Dec 17 04:41:29 UTC 2025
+========================================
+
+========================================
+Running benchmark:
+  Input tokens: 10000
+  Output tokens: 1000
+  Max concurrency: 64
+  Num prompts: 640
+  Resquest rate: inf
+  Started at: Wed Dec 17 04:41:32 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=64, model='/shared/amdgpu/home/share/deepseek/DeepSeek-R1', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=640, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='deepseek_r1_FP8_tp8_isl10000_osl1000_conc64_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=10000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 64
+  0%|          | 0/640 [00:00<?, ?it/s]  0%|          | 1/640 [00:40<7:13:35, 40.71s/it] 10%|█         | 65/640 [01:20<10:11,  1.06s/it]  20%|██        | 129/640 [02:01<06:54,  1.23it/s] 30%|███       | 193/640 [02:42<05:26,  1.37it/s] 40%|████      | 257/640 [03:22<04:24,  1.45it/s] 50%|█████     | 321/640 [04:02<03:33,  1.50it/s] 60%|██████    | 385/640 [04:43<02:47,  1.52it/s] 70%|███████   | 449/640 [05:23<02:03,  1.54it/s] 80%|████████  | 513/640 [06:04<01:21,  1.55it/s] 90%|█████████ | 577/640 [06:44<00:40,  1.56it/s]100%|██████████| 640/640 [06:44<00:00,  1.58it/s]
+============ Serving Benchmark Result ============
+Successful requests:                     640       
+Benchmark duration (s):                  404.51    
+Total input tokens:                      6400000   
+Total generated tokens:                  640000    
+Request throughput (req/s):              1.58      
+Output token throughput (tok/s):         1582.18   
+Total Token throughput (tok/s):          17403.96  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          9520.38   
+Median TTFT (ms):                        9537.16   
+P99 TTFT (ms):                           18526.00  
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          30.94     
+Median TPOT (ms):                        30.98     
+P99 TPOT (ms):                           39.65     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           30.90     
+Median ITL (ms):                         21.83     
+P99 ITL (ms):                            24.22     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          40424.99  
+Median E2EL (ms):                        40413.90  
+P99 E2EL (ms):                           40752.20  
+==================================================
+
+Completed at: Wed Dec 17 04:48:45 UTC 2025
+========================================
+
+========================================
+Running benchmark:
+  Input tokens: 10000
+  Output tokens: 1000
+  Max concurrency: 128
+  Num prompts: 1280
+  Resquest rate: inf
+  Started at: Wed Dec 17 04:48:48 UTC 2025
+========================================
+Namespace(backend='vllm', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/completions', dataset=None, dataset_name='random', dataset_path=None, max_concurrency=128, model='/shared/amdgpu/home/share/deepseek/DeepSeek-R1', tokenizer=None, best_of=1, use_beam_search=False, num_prompts=1280, logprobs=None, request_rate=inf, burstiness=1.0, seed=0, trust_remote_code=False, disable_tqdm=False, profile=False, save_result=True, metadata=None, result_dir='logs', result_filename='deepseek_r1_FP8_tp8_isl10000_osl1000_conc128_infrrate.json', ignore_eos=True, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='99', goodput=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, random_input_len=10000, random_output_len=1000, random_range_ratio=1.0, random_prefix_len=0, use_chat_template=False, hf_subset=None, hf_split=None, hf_output_len=None, tokenizer_mode='auto', served_model_name=None, lora_modules=None)
+Starting initial single prompt test run...
+Initial test run completed. Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 128
+  0%|          | 0/1280 [00:00<?, ?it/s]  0%|          | 1/1280 [00:31<11:12:39, 31.56s/it]  0%|          | 2/1280 [00:32<4:43:58, 13.33s/it]   1%|          | 9/1280 [00:32<41:19,  1.95s/it]    1%|▏         | 16/1280 [00:32<18:41,  1.13it/s]  2%|▏         | 27/1280 [00:32<08:38,  2.42it/s]  2%|▎         | 32/1280 [00:34<07:54,  2.63it/s]  3%|▎         | 35/1280 [00:34<07:33,  2.75it/s]  3%|▎         | 38/1280 [00:35<07:14,  2.86it/s]  3%|▎         | 40/1280 [00:36<06:58,  2.96it/s]  3%|▎         | 42/1280 [00:37<06:49,  3.02it/s]  3%|▎         | 43/1280 [00:37<06:40,  3.09it/s]  3%|▎         | 44/1280 [00:37<06:31,  3.16it/s]  4%|▎         | 45/1280 [00:37<06:22,  3.23it/s]  4%|▎         | 46/1280 [00:38<06:27,  3.19it/s]  4%|▎         | 47/1280 [00:38<06:15,  3.28it/s]  4%|▍         | 48/1280 [00:38<06:06,  3.36it/s]  4%|▍         | 49/1280 [00:39<05:58,  3.44it/s]  4%|▍         | 50/1280 [00:39<06:12,  3.30it/s]  4%|▍         | 51/1280 [00:39<06:03,  3.38it/s]  4%|▍         | 52/1280 [00:39<05:53,  3.47it/s]  4%|▍         | 53/1280 [00:40<05:47,  3.53it/s]  4%|▍         | 54/1280 [00:40<06:07,  3.34it/s]  4%|▍         | 55/1280 [00:40<05:56,  3.43it/s]  4%|▍         | 56/1280 [00:41<05:50,  3.49it/s]  4%|▍         | 57/1280 [00:41<05:46,  3.53it/s]  5%|▍         | 58/1280 [00:41<05:41,  3.58it/s]  5%|▍         | 59/1280 [00:41<06:02,  3.36it/s]  5%|▍         | 60/1280 [00:42<05:54,  3.45it/s]  5%|▍         | 61/1280 [00:42<05:48,  3.50it/s]  5%|▍         | 62/1280 [00:42<05:44,  3.53it/s]  5%|▍         | 63/1280 [00:43<06:03,  3.35it/s]  5%|▌         | 64/1280 [00:43<05:55,  3.42it/s]  5%|▌         | 65/1280 [00:43<05:45,  3.51it/s]  5%|▌         | 66/1280 [00:43<05:40,  3.56it/s]  5%|▌         | 67/1280 [00:44<06:01,  3.36it/s]  5%|▌         | 68/1280 [00:44<05:52,  3.44it/s]  5%|▌         | 69/1280 [00:44<05:45,  3.50it/s]  5%|▌         | 70/1280 [00:45<05:41,  3.55it/s]  6%|▌         | 71/1280 [00:45<06:00,  3.35it/s]  6%|▌         | 72/1280 [00:45<05:51,  3.44it/s]  6%|▌         | 73/1280 [00:45<05:45,  3.50it/s]  6%|▌         | 74/1280 [00:46<05:40,  3.55it/s]  6%|▌         | 75/1280 [00:46<05:59,  3.35it/s]  6%|▌         | 76/1280 [00:46<05:50,  3.43it/s]  6%|▌         | 77/1280 [00:47<05:45,  3.48it/s]  6%|▌         | 78/1280 [00:47<05:40,  3.53it/s]  6%|▌         | 79/1280 [00:47<05:35,  3.58it/s]  6%|▋         | 80/1280 [00:48<05:56,  3.36it/s]  6%|▋         | 81/1280 [00:48<05:48,  3.44it/s]  6%|▋         | 82/1280 [00:48<05:43,  3.49it/s]  6%|▋         | 83/1280 [00:48<05:37,  3.55it/s]  7%|▋         | 84/1280 [00:49<05:58,  3.33it/s]  7%|▋         | 85/1280 [00:49<05:48,  3.43it/s]  7%|▋         | 86/1280 [00:49<05:42,  3.49it/s]  7%|▋         | 87/1280 [00:49<05:37,  3.54it/s]  7%|▋         | 88/1280 [00:50<05:56,  3.34it/s]  7%|▋         | 89/1280 [00:50<05:47,  3.43it/s]  7%|▋         | 90/1280 [00:50<05:41,  3.48it/s]  7%|▋         | 91/1280 [00:51<05:36,  3.53it/s]  7%|▋         | 92/1280 [00:51<05:54,  3.35it/s]  7%|▋         | 93/1280 [00:51<05:46,  3.42it/s]  7%|▋         | 94/1280 [00:52<05:39,  3.49it/s]  7%|▋         | 95/1280 [00:52<05:35,  3.53it/s]  8%|▊         | 96/1280 [00:52<05:54,  3.34it/s]  8%|▊         | 97/1280 [00:52<05:43,  3.44it/s]  8%|▊         | 98/1280 [00:53<05:37,  3.50it/s]  8%|▊         | 99/1280 [00:53<05:33,  3.54it/s]  8%|▊         | 100/1280 [00:53<05:30,  3.57it/s]  8%|▊         | 101/1280 [00:54<05:51,  3.35it/s]  8%|▊         | 102/1280 [00:54<05:41,  3.44it/s]  8%|▊         | 103/1280 [00:54<05:37,  3.48it/s]  8%|▊         | 104/1280 [00:54<05:32,  3.54it/s]  8%|▊         | 105/1280 [00:55<05:51,  3.34it/s]  8%|▊         | 106/1280 [00:55<05:42,  3.43it/s]  8%|▊         | 107/1280 [00:55<05:36,  3.48it/s]  8%|▊         | 108/1280 [00:56<05:31,  3.53it/s]  9%|▊         | 109/1280 [00:56<05:51,  3.33it/s]  9%|▊         | 110/1280 [00:56<05:41,  3.43it/s]  9%|▊         | 111/1280 [00:56<05:35,  3.48it/s]  9%|▉         | 112/1280 [00:57<05:31,  3.52it/s]  9%|▉         | 113/1280 [00:57<05:48,  3.35it/s]  9%|▉         | 114/1280 [00:57<05:40,  3.42it/s]  9%|▉         | 115/1280 [00:58<05:33,  3.49it/s]  9%|▉         | 116/1280 [00:58<05:29,  3.53it/s]  9%|▉         | 117/1280 [00:58<05:25,  3.57it/s]  9%|▉         | 118/1280 [00:59<05:45,  3.36it/s]  9%|▉         | 119/1280 [00:59<05:37,  3.44it/s]  9%|▉         | 120/1280 [00:59<05:32,  3.49it/s]  9%|▉         | 121/1280 [00:59<05:27,  3.54it/s] 10%|▉         | 122/1280 [01:00<05:46,  3.34it/s] 10%|▉         | 123/1280 [01:00<05:37,  3.43it/s] 10%|▉         | 124/1280 [01:00<05:31,  3.49it/s] 10%|▉         | 125/1280 [01:00<05:28,  3.52it/s] 10%|▉         | 126/1280 [01:01<05:45,  3.34it/s] 10%|▉         | 127/1280 [01:01<05:35,  3.43it/s] 10%|█         | 128/1280 [01:01<05:30,  3.49it/s]
+Completed at: Wed Dec 17 07:04:52 UTC 2025
+========================================
