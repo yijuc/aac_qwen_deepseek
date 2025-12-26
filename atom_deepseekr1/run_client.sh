@@ -14,18 +14,21 @@ else
     exit 1
 fi
 
-log_dir="logs_chunked"
-mkdir -p ${log_dir}
-log_file=${1:-"benchmark_tp${TP}_results.log"}
-csv_file=${2:-"benchmark_tp${TP}_results.csv"}
+client_log_dir="/workdir/atom_deepseekr1/logs_cpu_setting_all_test2"
+mkdir -p ${client_log_dir}
+log_tag="results"
+
+log_file=${1:-"benchmark_tp${TP}_${log_tag}.log"}
+csv_file=${2:-"benchmark_tp${TP}_${log_tag}.csv"}
 
 if [ "$enable_profiler" = "1" ]; then
     log_file="profiler_${log_file}"
     csv_file="profiler_${csv_file}"
 fi
 
-log_file="${log_dir}/${log_file}"
-csv_file="${log_dir}/${csv_file}"
+log_file="${client_log_dir}/${log_file}"
+csv_file="${client_log_dir}/${csv_file}"
+
 
 if [ -f ${log_file} ]; then
     echo "Log file ${log_file} already exists. Please remove it before running the benchmark."
@@ -38,27 +41,27 @@ fi
 
 MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1"
 
-echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
+echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
 
 PORT=8000
 configs=(
-    # "1000 1000 4"
-    # "1000 1000 8"
-    # "1000 1000 16"
-    # "1000 1000 32"
-    # "1000 1000 64"
-    # "1000 1000 128"
-    # "4000 1000 64"
-    # "4000 1000 128"
-    # "10000 1000 32"
-    # "10000 1000 64"
-    "10000 1000 128"
+    "1000 1000 4"
+    "1000 1000 8"
+    "1000 1000 16"
+    "1000 1000 32"
+    "1000 1000 64"
+    "1000 1000 128"
+    "4000 1000 64"
+    "4000 1000 128"
+    "10000 1000 32"
+    "10000 1000 64"
+    # "10000 1000 128"
 )
 
 for config in "${configs[@]}"; do
     read ISL OSL CONC <<< "$config"
     num_prompts=$((CONC * 10))
-    RESULT_FILENAME="deepseek_r1_FP8_tp${TP}_isl${ISL}_osl${OSL}_conc${CONC}_infrrate"
+    RESULT_FILENAME="${client_log_dir}/deepseek_r1_FP8_tp${TP}_isl${ISL}_osl${OSL}_conc${CONC}_infrrate"
     profiler_args=""
     if [ "$enable_profiler" = "1" ]; then
         RESULT_FILENAME="${RESULT_FILENAME}_profiler"
@@ -87,11 +90,12 @@ for config in "${configs[@]}"; do
     --save-result --result-dir=${log_dir} --result-filename=$RESULT_FILENAME.json \
     --percentile-metrics="ttft,tpot,itl,e2el" $profiler_args 2>&1 | tee -a ${log_file} | tee ${temp_output}
 
+    request_throughput=$(grep -i "Request throughput (req/s):" ${temp_output} | tail -1 | awk '{print $NF}')
     mean_ttft=$(grep "Mean TTFT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
     mean_tpot=$(grep "Mean TPOT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
     token_throughput=$(grep "Total Token throughput (tok/s):" ${temp_output} | tail -1 | awk '{print $5}')
     
-    echo "${ISL},${OSL},${CONC},${num_prompts},${mean_ttft},${mean_tpot},${token_throughput}" >> ${csv_file}
+    echo "${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> ${csv_file}
     
     rm -f ${temp_output}
     
