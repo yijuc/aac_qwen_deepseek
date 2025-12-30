@@ -1,6 +1,6 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch =====
-TP=8 # or TP=4
+TP=8 
 enable_profiler=0
 # ========================
 
@@ -14,11 +14,11 @@ else
     exit 1
 fi
 
-client_log_dir="/workdir/atom_qwen235b/logs_cpu_setting_untuned"
+client_log_dir="/workdir/atom_qwen235b/logs_atom_4a784_aiter_3200c_1226_max20k_16384_env_conc_hipblaslt"
 mkdir -p ${client_log_dir}
 
-log_file=${1:-"benchmark_tp${TP}_results_aiter_log2.log"}
-csv_file=${2:-"benchmark_tp${TP}_results_aiter_log2.csv"}
+log_file=${1:-"benchmark_tp${TP}_results.log"}
+csv_file=${2:-"benchmark_tp${TP}_results.csv"}
 
 if [ "$enable_profiler" = "1" ]; then
     log_file="profiler_${log_file}"
@@ -28,18 +28,12 @@ fi
 log_file="${client_log_dir}/${log_file}"
 csv_file="${client_log_dir}/${csv_file}"
 
-if [ -f ${log_file} ]; then
-    echo "Log file ${log_file} already exists. Please remove it before running the benchmark."
-    exit 1
-fi
-if [ -f ${csv_file} ]; then
-    echo "CSV file ${csv_file} already exists. Please remove it before running the benchmark."
-    exit 1
+if [ ! -f "${csv_file}" ]; then
+    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
 fi
 
-MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
-
-echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
+# MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
+MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
 
 PORT=8000
 configs=(
@@ -53,26 +47,30 @@ configs=(
 
 for config in "${configs[@]}"; do
     read ISL OSL CONC <<< "$config"
-    num_prompts=$((CONC * 2))
+    num_prompts=$((CONC * 4))
     RESULT_FILENAME="${client_log_dir}/qwen3_235b_a22b_instrct_2507_FP8_TP${TP}_isl${ISL}_osl${OSL}_conc${CONC}_infrrate"
+    
     profiler_args=""
     if [ "$enable_profiler" = "1" ]; then
         RESULT_FILENAME="${RESULT_FILENAME}_profiler"
         profiler_args=" --profile"
     fi
+
+    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+
     echo "" | tee -a ${log_file}
     echo "========================================" | tee -a ${log_file}
-    echo "Running benchmark:" | tee -a ${log_file}
+    echo "Running benchmark at: ${timestamp}" | tee -a ${log_file} # Log 內也加上時間
     echo "  Input tokens: ${ISL}" | tee -a ${log_file}
     echo "  Output tokens: ${OSL}" | tee -a ${log_file}
     echo "  Max concurrency: ${CONC}" | tee -a ${log_file}
     echo "  Num prompts: ${num_prompts}" | tee -a ${log_file}
     echo "  Resquest rate: inf" | tee -a ${log_file}
-    echo "  Started at: $(date)" | tee -a ${log_file}
     echo "========================================" | tee -a ${log_file}
     
     temp_output=$(mktemp)
-    python /root/bench_serving/benchmark_serving.py \
+    
+    python -m atom.benchmarks.benchmark_serving \
     --model=$MODEL --backend=vllm --base-url=http://localhost:$PORT \
     --dataset-name=random \
     --random-input-len=${ISL} --random-output-len=${OSL} \
@@ -80,7 +78,7 @@ for config in "${configs[@]}"; do
     --num-prompts=$num_prompts \
     --max-concurrency=$CONC \
     --request-rate=inf --ignore-eos \
-    --save-result --result-dir=${log_dir} --result-filename=$RESULT_FILENAME.json \
+    --save-result --result-dir=${client_log_dir} --result-filename=$RESULT_FILENAME.json \
     --percentile-metrics="ttft,tpot,itl,e2el" $profiler_args 2>&1 | tee -a ${log_file} | tee ${temp_output}
 
     request_throughput=$(grep -i "Request throughput (req/s):" ${temp_output} | tail -1 | awk '{print $NF}')
@@ -88,7 +86,7 @@ for config in "${configs[@]}"; do
     mean_tpot=$(grep "Mean TPOT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
     token_throughput=$(grep "Total Token throughput (tok/s):" ${temp_output} | tail -1 | awk '{print $5}')
     
-    echo "${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> ${csv_file}
+    echo "${timestamp},${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> ${csv_file}
     
     rm -f ${temp_output}
     
@@ -97,5 +95,4 @@ for config in "${configs[@]}"; do
     echo "========================================" | tee -a ${log_file}
     
     sleep 3
-    # done
 done
