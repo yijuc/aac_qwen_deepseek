@@ -14,7 +14,7 @@ else
     exit 1
 fi
 
-client_log_dir="/workdir/atom_deepseekr1/logs_cpu_setting_all_test2"
+client_log_dir="/workdir/atom_deepseekr1/logs_dsr1_atom_12241340"
 mkdir -p ${client_log_dir}
 log_tag="results"
 
@@ -39,23 +39,24 @@ if [ -f ${csv_file} ]; then
     exit 1
 fi
 
-MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1"
+# MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1-0528"
+MODEL="/dev/shm/DeepSeek-R1-0528"
 
 echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
 
 PORT=8000
 configs=(
-    "1000 1000 4"
-    "1000 1000 8"
-    "1000 1000 16"
-    "1000 1000 32"
-    "1000 1000 64"
-    "1000 1000 128"
-    "4000 1000 64"
-    "4000 1000 128"
-    "10000 1000 32"
-    "10000 1000 64"
-    # "10000 1000 128"
+    # "1024 1024 4"
+    # "1024 1024 8"
+    # "1024 1024 16"
+    # "1024 1024 32"
+    # "1024 1024 64"
+    # "1024 1024 128"
+    "4096 1024 64"
+    "4096 1024 128"
+    "10240 1024 32"
+    "10240 1024 64"
+    # "10240 1024 128"
 )
 
 for config in "${configs[@]}"; do
@@ -79,11 +80,12 @@ for config in "${configs[@]}"; do
     echo "========================================" | tee -a ${log_file}
     
     temp_output=$(mktemp)
-    python /root/bench_serving/benchmark_serving.py \
+    # python /root/bench_serving/benchmark_serving.py \
+    PYTHONPATH=/ATOM/atom python -m benchmarks.benchmark_serving \
     --model=$MODEL --backend=vllm --base-url=http://localhost:$PORT \
     --dataset-name=random \
     --random-input-len=${ISL} --random-output-len=${OSL} \
-    --random-range-ratio 1 \
+    --random-range-ratio 0.8 \
     --num-prompts=$num_prompts \
     --max-concurrency=$CONC \
     --request-rate=inf --ignore-eos \

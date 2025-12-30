@@ -5,9 +5,10 @@ enable_profiler=0
 enable_output_gemm=0
 # ========================
 
-server_log_dir="/workdir/atom_deepseekr1/logs_cpu_setting_all_test2"
+server_log_dir="/workdir/atom_deepseekr1/logs_dsr1_atom_12241340"
 mkdir -p ${server_log_dir}
-log_tag="atom_fp8_tp${TP}_deepseek_r1_in1k_out1k_conc64_kernel"
+log_tag="atom_fp8_tp${TP}_deepseek_r1"
+# log_tag="atom_fp8_tp${TP}_deepseek_r1_in1k_out1k_conc64_kernel"
 server_log_file="${server_log_dir}/${log_tag}_server_running.log"
 
 unset HIP_VISIBLE_DEVICES
@@ -37,9 +38,16 @@ if [ "$enable_profiler" = "1" ]; then
     profiler_args=" --torch-profiler-dir ${profiler_dir}"
 fi
 
-MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1"
+# MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1-0528"
+MODEL="/dev/shm/DeepSeek-R1-0528"
+
 rm -rf /root/.cache/atom/
 
+## 1k => add --max-model-len 2048
+# CMD="
+# python -m atom.entrypoints.openai_server --model $MODEL -tp $TP --block-size 16 --kv_cache_dtype fp8 --max-model-len 2048 $profiler_args 
+# "
+## 4k/10k
 CMD="
 python -m atom.entrypoints.openai_server --model $MODEL -tp $TP --block-size 16 --kv_cache_dtype fp8 $profiler_args 
 "
