@@ -1,0 +1,45 @@
+#!/bin/bash
+source ./env_config.sh
+
+# 接收主腳本傳來的 TP
+TP=$1
+EXTRA_ARGS=$2
+ISL=$3
+
+# 動態設定 GPU
+unset HIP_VISIBLE_DEVICES
+if [ "$TP" = "8" ]; then
+    export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+else
+    export HIP_VISIBLE_DEVICES=0,1,2,3
+fi
+
+echo "Starting Server with TP=${TP} on GPUs: ${HIP_VISIBLE_DEVICES}"
+
+rm -rf /root/.cache/atom/
+
+if [ "$ISL" = "1024" ]; then
+    CMD="python -m atom.entrypoints.openai_server \
+    --model ${MODEL} \
+    -tp ${TP} \
+    --port ${PORT} \
+    --block-size 16 \
+    --kv_cache_dtype fp8 \
+    --max-model-len 2048 \
+    ${EXTRA_ARGS}"
+else
+    CMD="python -m atom.entrypoints.openai_server \
+    --model ${MODEL} \
+    -tp ${TP} \
+    --port ${PORT} \
+    --block-size 16 \
+    --kv_cache_dtype fp8 \
+    ${EXTRA_ARGS}"
+fi
+
+echo "------------------------------------------------"
+echo "準備執行 Server 指令:"
+echo "$CMD"
+echo "------------------------------------------------"
+
+$CMD
