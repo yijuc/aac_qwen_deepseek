@@ -23,7 +23,7 @@ log_file="${client_log_dir}/${log_file}"
 csv_file="${client_log_dir}/${csv_file}"
 
 if [ ! -f "${csv_file}" ]; then
-    echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
+    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
 fi
 
 
