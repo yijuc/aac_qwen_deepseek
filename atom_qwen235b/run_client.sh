@@ -1,6 +1,6 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch =====
-TP=8 
+TP=4
 enable_profiler=0
 # ========================
 
@@ -14,11 +14,11 @@ else
     exit 1
 fi
 
-client_log_dir="/workdir/atom_qwen235b/logs_atom_4a784_aiter_3200c_1226_max20k_16384_env_conc_hipblaslt"
-mkdir -p ${client_log_dir}
+client_log_dir="/workdir/eveline/atom_qwen235b/logs_vultr"
+log_tag="results"
 
-log_file=${1:-"benchmark_tp${TP}_results.log"}
-csv_file=${2:-"benchmark_tp${TP}_results.csv"}
+log_file=${1:-"benchmark_tp${TP}_${log_tag}.log"}
+csv_file=${2:-"benchmark_tp${TP}_${log_tag}.csv"}
 
 if [ "$enable_profiler" = "1" ]; then
     log_file="profiler_${log_file}"
@@ -33,16 +33,26 @@ if [ ! -f "${csv_file}" ]; then
 fi
 
 # MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
-MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
+MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
 
 PORT=8000
 configs=(
     "1000 1000 256"
-    # "1000 1000 128"
-    # "4000 1000 128"
-    # "4000 1000 64"
-    # "10000 1000 64"
-    # "10000 1000 32"
+    "1000 1000 128"
+    "4000 1000 128"
+    "4000 1000 64"
+    "10000 1000 64"
+    "10000 1000 32"
+    # 3.0~3.6k/0.3~0.5k
+    # "3300 400 256"
+    # 16~20k/0.3~0.5k
+    # "18000 400 2"
+    # 0.8~1k/1.6~2k
+    # "900 1800 32"
+    # 3.6~4.4k/1.8~2.2k
+    # "4000 2000 128"
+    # 11~15k/2.5~2.9k
+    # "13000 2700 64"
 )
 
 for config in "${configs[@]}"; do
@@ -60,7 +70,7 @@ for config in "${configs[@]}"; do
 
     echo "" | tee -a ${log_file}
     echo "========================================" | tee -a ${log_file}
-    echo "Running benchmark at: ${timestamp}" | tee -a ${log_file} # Log 內也加上時間
+    echo "Running benchmark at: ${timestamp}" | tee -a ${log_file}
     echo "  Input tokens: ${ISL}" | tee -a ${log_file}
     echo "  Output tokens: ${OSL}" | tee -a ${log_file}
     echo "  Max concurrency: ${CONC}" | tee -a ${log_file}
