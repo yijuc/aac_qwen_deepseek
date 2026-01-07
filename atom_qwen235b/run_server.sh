@@ -1,8 +1,8 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch, output gemm switch =====
-TP=8  # TP=8 or 4
+TP=4  # TP=8 or 4
 enable_profiler=0
-enable_output_gemm=1
+enable_output_gemm=0
 ## case
 input_len=1000
 output_len=1000
@@ -31,7 +31,7 @@ export ATOM_ENABLE_QK_NORM_ROPE_CACHE_QUANT_FUSION=1
 unset AITER_LOG_MORE
 # export AITER_LOG_MORE=2
 
-server_log_dir="/workdir/atom_qwen235b/logs_atom_4a784_aiter_3200c_1226_max20k_16384_env_conc_hipblaslt"
+server_log_dir="/workdir/eveline/atom_qwen235b/logs_vultr"
 mkdir -p ${server_log_dir}
 server_log_file="${server_log_dir}/server_running_qwen3_235b_a22b_instrct_FP8_TP${TP}_isl${input_len}_osl${output_len}_conc${concurrency}_infrrate.log"
 
@@ -56,7 +56,7 @@ if [ "$enable_profiler" = "1" ]; then
 fi
 
 # MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
-MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
+MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
 
 rm -rf /root/.cache/atom/
 
