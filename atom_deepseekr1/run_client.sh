@@ -29,14 +29,8 @@ fi
 log_file="${client_log_dir}/${log_file}"
 csv_file="${client_log_dir}/${csv_file}"
 
-
-if [ -f ${log_file} ]; then
-    echo "Log file ${log_file} already exists. Please remove it before running the benchmark."
-    exit 1
-fi
-if [ -f ${csv_file} ]; then
-    echo "CSV file ${csv_file} already exists. Please remove it before running the benchmark."
-    exit 1
+if [ ! -f "${csv_file}" ]; then
+    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
 fi
 
 # MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1-0528"
@@ -68,15 +62,17 @@ for config in "${configs[@]}"; do
         RESULT_FILENAME="${RESULT_FILENAME}_profiler"
         profiler_args=" --profile"
     fi
+
+    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+
     echo "" | tee -a ${log_file}
     echo "========================================" | tee -a ${log_file}
-    echo "Running benchmark:" | tee -a ${log_file}
+    echo "Running benchmark at: ${timestamp}" | tee -a ${log_file}
     echo "  Input tokens: ${ISL}" | tee -a ${log_file}
     echo "  Output tokens: ${OSL}" | tee -a ${log_file}
     echo "  Max concurrency: ${CONC}" | tee -a ${log_file}
     echo "  Num prompts: ${num_prompts}" | tee -a ${log_file}
     echo "  Resquest rate: inf" | tee -a ${log_file}
-    echo "  Started at: $(date)" | tee -a ${log_file}
     echo "========================================" | tee -a ${log_file}
     
     temp_output=$(mktemp)
@@ -89,7 +85,7 @@ for config in "${configs[@]}"; do
     --num-prompts=$num_prompts \
     --max-concurrency=$CONC \
     --request-rate=inf --ignore-eos \
-    --save-result --result-dir=${log_dir} --result-filename=$RESULT_FILENAME.json \
+    --save-result --result-dir=${client_log_dir} --result-filename=$RESULT_FILENAME.json \
     --percentile-metrics="ttft,tpot,itl,e2el" $profiler_args 2>&1 | tee -a ${log_file} | tee ${temp_output}
 
     request_throughput=$(grep -i "Request throughput (req/s):" ${temp_output} | tail -1 | awk '{print $NF}')
@@ -97,7 +93,7 @@ for config in "${configs[@]}"; do
     mean_tpot=$(grep "Mean TPOT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
     token_throughput=$(grep "Total Token throughput (tok/s):" ${temp_output} | tail -1 | awk '{print $5}')
     
-    echo "${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> ${csv_file}
+    echo "${timestamp},${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> ${csv_file}
     
     rm -f ${temp_output}
     
@@ -106,5 +102,4 @@ for config in "${configs[@]}"; do
     echo "========================================" | tee -a ${log_file}
     
     sleep 3
-    # done
 done
