@@ -61,5 +61,55 @@ cd vllm_qwen235b
 ./run_client.sh
 ```
 
+# Run kunlun-benchmark
+## Download kunlun-benchmark pacakge
+for py3.12
+wget https://sinian-metrics-platform.oss-cn-hangzhou.aliyuncs.com/ai_perf/pack/kunlun_benchmark/main/ubuntu22.04/py3.12.8/kunlun-benchmark.tar.gz
+
+for py3.10
+wget https://sinian-metrics-platform.oss-cn-hangzhou.aliyuncs.com/ai_perf/pack/kunlun_benchmark/main/ubuntu22.04/py3.10.12/kunlun-benchmark.tar.gz
+
+tar -zxvf kunlun-benchmark.tar.gz
+
+## Install requirements
+pip install loguru jsonlines prettytable oss2
+
+## Fix cpp_builder.py if you are not using windows os
+```bash
+cp /opt/venv/lib/python3.12/site-packages/torch/_inductor/cpp_builder.py /opt/venv/lib/python3.12/site-packages/torch/_inductor/cpp_builder.py.bk
+vim /opt/venv/lib/python3.12/site-packages/torch/_inductor/cpp_builder.py
+```
+In Line 22, 
+```python
+from ctypes import cdll, wintypes
+```
+Remove wintypes
+```python
+from ctypes import cdll
+```
+
+## Set KUNLUN_DIR
+KUNLUN_DIR="/opt/kunlun-benchmark" # where you put kunlun-benchmark
+```bash
+# Exmpale in client
+${KUNLUN_DIR}/kunlun-benchmark vllm server
+  --port $PORT \
+  --work_mode manual \
+  --max_input_len 1000 \
+  --min_input_len 800 \
+  --max_output_len 500 \
+  --min_output_len 400 \
+  --concurrency ${max_concurrency} \
+  --query_num ${num_prompts} \
+  --result_dir $client_log_dir \
+  --model_path $MODEL \
+  --is_sla False \
+  --sla_decode 50 \
+  --sla_prefill 3000 
+```
+The --sla_decode and --sla_prefill is only used when is_sla True (Will automatically find a solution; costs lots of time)
+
+Server command is same with the one above.
+
 # Referece
 https://amd.atlassian.net/wiki/spaces/MLSE/pages/1312564741/Qwen235B+scripts#ATOM-script%3A
