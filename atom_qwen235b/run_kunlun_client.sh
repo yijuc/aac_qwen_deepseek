@@ -1,26 +1,66 @@
 #!/bin/bash
-# ====== Setting TP, Profiler switch =====
-TP=8 # only used for filename, will follow the TP server setting
+# ====== Setting Profiler switch =====
 enable_profiler=0
-# ========================
-KUNLUN_DIR="/workdir/eveline/aac_qwen_deepseek/kunlun-benchmark"
 
-unset HIP_VISIBLE_DEVICES
-if [ "$TP" = "8" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-elif [ "$TP" = "4" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3
+# ====== Setting TP, Model path, Kunlun-benchmark directory, Port, log directory =====
+# TP: only used for metadata/filename, will follow the actual server setting
+TP=4
+KUNLUN_DIR="/opt/kunlun-benchmark"
+# Model path configuration
+MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
+# Port
+PORT=8000
+# Directory for storing client logs
+client_log_dir="/workdir/eveline/atom_qwen235b/logs_vultr_no_max_args"
+# ========================================
+
+
+# Inspect GPU
+BACKEND="CPU"
+if command -v nvidia-smi > /dev/null; then
+    echo "NVIDIA environment detected"
+    BACKEND="NVIDIA"
+elif command -v rocminfo > /dev/null; then
+    echo "ROCm environment detected"
+    BACKEND="ROCM"
 else
-    echo "Unsupported TP value: $TP"
-    exit 1
+    echo "No supported GPU environment detected"
 fi
 
-client_log_dir="/workdir/eveline/atom_qwen235b/logs_vultr_kunlun_benchmark_isSLA"
-mkdir -p ${client_log_dir}
+if [ "$BACKEND" == "NVIDIA" ]; then
+    # Reset GPU visibility settings
+    unset CUDA_VISIBLE_DEVICES
+    if [ "$TP" = "8" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+    elif [ "$TP" = "4" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1,2,3
+    elif [ "$TP" = "2" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1
+    else
+        export CUDA_VISIBLE_DEVICES=0,1,2,3
+    fi
+elif [ "$BACKEND" == "ROCM" ]; then
+    # Reset GPU visibility settings
+    unset HIP_VISIBLE_DEVICES
+    if [ "$TP" = "8" ]; then
+        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+    elif [ "$TP" = "4" ]; then
+        export HIP_VISIBLE_DEVICES=0,1,2,3
+    elif [ "$TP" = "2" ]; then
+        export HIP_VISIBLE_DEVICES=0,1
+    else
+        export HIP_VISIBLE_DEVICES=0,1,2,3
+    fi
+fi
 
+
+
+mkdir -p ${client_log_dir}
+# Define result file names (Defaults to benchmark_tpX_results.log/csv if not provided as arguments)
 log_file=${1:-"benchmark_tp${TP}_results.log"}
 csv_file=${2:-"benchmark_tp${TP}_results.csv"}
 
+# Prefix filenames if profiler is enabled
 if [ "$enable_profiler" = "1" ]; then
     log_file="profiler_${log_file}"
     csv_file="profiler_${csv_file}"
@@ -29,41 +69,35 @@ fi
 log_file="${client_log_dir}/${log_file}"
 csv_file="${client_log_dir}/${csv_file}"
 
+# Initialize CSV header if file does not exist
 if [ ! -f "${csv_file}" ]; then
-    echo "TimeStamp,MIN_Input,MAX_Input,MIN_Output,MAX_Output,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
+    echo "TimeStamp,MIN_Input,MAX_Input,MIN_Output,MAX_Output,Num_Prompts,Generate_Token_Throughput,Total_Token_Throughput,Request_throughput_req_s,Concurrency,Mean_TTFT_ms,Mean_TPOT_ms" > "${csv_file}"
 fi
 
-# MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
-MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
-
-PORT=8000
-KUNLUN_DIR="/opt/kunlun-benchmark"
-
 export HF_OFFLINE=1
-
-# ================= 測試參數組合 =================
-# 格式: MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC
+# ================= Test Parameter Combinations =================
+# Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
 INPUT_OUTPUT_COMBOS=(
-#    "800 1000 1600 2000 512"
-#    "3000 3600 300 500 256"
-#    "3600 4400 1800 2200 256"
-   "11000 15000 2500 2900 1" # tp4, tp8 failed
+#   "800 1000 1600 2000 512"
+#   "3000 3600 300 500 256"
+#   "3600 4400 1800 2200 256"
+#   "11000 15000 2500 2900 94"
    "16000 20000 300 500 1" # tp4, tp8 failed
 )
 
-# ================= 主迴圈 =================
+# ================= Main Loop =================
 for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
-    # 1. 解析參數
+    # 1. Parse parameters from current combo
     read -r MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC <<< "$COMBO"
-    
-    # 計算 Prompt 數量
+
+    # Calculate number of total prompts (Set to 4x concurrency)
     num_prompts=$((CONC * 4))
-    
+
     timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     LOG_FILE="${client_log_dir}/benchmark_${timestamp// /_}.log"
-    temp_output=$(mktemp) # 建立暫存檔來分析數據
+    temp_output=$(mktemp) # Create a temporary file for data extraction
 
-    # 2. 顯示開始訊息
+    # 2. Display start message
     echo "" | tee -a "$LOG_FILE"
     echo "========================================" | tee -a "$LOG_FILE"
     echo "Running benchmark at: ${timestamp}" | tee -a "$LOG_FILE"
@@ -71,8 +105,8 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     echo "  Concurrency: ${CONC}, Prompts: ${num_prompts}" | tee -a "$LOG_FILE"
     echo "========================================" | tee -a "$LOG_FILE"
 
-    # 3. 執行 Kunlun Benchmark (並同時輸出到螢幕、Log檔、與暫存檔)
-    # 注意：這裡使用了 2>&1 把錯誤訊息也導向 stdout，方便 grep 抓取
+    # 3. Execute Kunlun Benchmark
+    # Redirect stderr to stdout to ensure all output is captured for logging
     ${KUNLUN_DIR}/kunlun-benchmark vllm server \
         --port $PORT \
         --work_mode manual \
@@ -84,72 +118,76 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
         --query_num ${num_prompts} \
         --result_dir $client_log_dir \
         --model_path $MODEL \
-        --is_sla True \
+        --is_sla False \
         --sla_decode 50 \
         --sla_prefill 3000 \
         --tp $TP \
         --extra_server_args "--enable-expert-parallel " \
         2>&1 | tee -a "$LOG_FILE" | tee "$temp_output"
 
-    # 4. 數據擷取 (Data Extraction)
+    # 4. Data Extraction
+    # Find the most recently generated JSON result file
     LATEST_JSON=$(ls -t ${client_log_dir}/*.json 2>/dev/null | head -n 1)
 
     if [ -z "$LATEST_JSON" ]; then
         echo "Warning: No JSON result found in ${client_log_dir}"
-        # 設定預設值以免 CSV 錯位
+        # Set default values to prevent CSV misalignment
         request_throughput="N/A"
         mean_ttft="N/A"
         mean_tpot="N/A"
         token_throughput="N/A"
+        generate_token_throughput="N/A"
     else
         echo "Parsing result from: $LATEST_JSON"
-        
-        # 使用 Python 讀取 Kunlun 特有的 JSON 結構
+
+        # Use Python to read the specific Kunlun JSON structure
         METRICS=$(python3 -c "
 import sys, json
 
 try:
     with open(sys.argv[1], 'r') as f:
         data = json.load(f)
-    
-    # 進入 perf_result 層級
+
+    # Navigate to perf_result level
     res = data.get('perf_result', {})
-    
+
     # 1. Request Throughput (RPS)
     rps = res.get('queries_per_second', 'N/A')
-    
-    # 2. Mean TTFT (Prefill Time)
+
+    # 2. Mean TTFT (Average Prefill Time)
     ttft = res.get('average_prefill_time', 'N/A')
-    
-    # 3. Mean TPOT (Decode Time)
+
+    # 3. Mean TPOT (Average Decode Time)
     tpot = res.get('average_decode_time', 'N/A')
-    
-    # 4. Total Token Throughput
-    # 注意：JSON key 包含括號，必須完整匹配
+
+    # 4. Total Token Throughput (TPPS)
     tps = res.get('total_tokens_per_second(tps)', 'N/A')
 
-    print(f'{rps},{ttft},{tpot},{tps}')
+    # 5. Generate Token Throughput (GTPS)
+    gtps = res.get('generate_tokens_per_second(tps)', 'N/A')
+
+    print(f'{rps},{ttft},{tpot},{tps},{gtps}')
 
 except Exception as e:
-    # 如果 JSON 壞掉或找不到 key，印出錯誤以便除錯 (寫在 stderr)，並回傳 N/A
+    # Print parse error to stderr and return N/A placeholders to stdout
     sys.stderr.write(f'Python Parse Error: {e}\n')
-    print('N/A,N/A,N/A,N/A')
+    print('N/A,N/A,N/A,N/A,N/A')
 " "$LATEST_JSON")
 
-        # 將 Python 吐回來的 CSV 字串拆解成變數
-        IFS=',' read -r request_throughput mean_ttft mean_tpot token_throughput <<< "$METRICS"
+        # Split the CSV string returned by Python into bash variables
+        IFS=',' read -r request_throughput mean_ttft mean_tpot token_throughput generate_token_throughput <<< "$METRICS"
     fi
 
-    # 5. 寫入 CSV 
-    echo "${timestamp},${MIN_INPUT},${MAX_INPUT},${MIN_OUTPUT},${MAX_OUTPUT},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> "$csv_file"
+    # 5. Write results to CSV
+    echo "${timestamp},${MIN_INPUT},${MAX_INPUT},${MIN_OUTPUT},${MAX_OUTPUT},${num_prompts},${generate_token_throughput},${token_throughput},${request_throughput},${CONC},${mean_ttft},${mean_tpot}" >> "$csv_file"
 
     echo "----------------------------------------------------------------"
-    echo "Run Complete." 
+    echo "Run Complete."
     echo "File: $LATEST_JSON"
     echo "RPS: $request_throughput | TTFT: $mean_ttft | TPOT: $mean_tpot"
     echo "----------------------------------------------------------------"
 
-    # 6. 清理與冷卻
+    # 6. Cleanup and cooldown period
     rm -f "$temp_output"
     sleep 5
 done

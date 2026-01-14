@@ -9,14 +9,42 @@ output_len=1000
 concurrency=256
 # ========================
 
-unset HIP_VISIBLE_DEVICES
-if [ "$TP" = "8" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-elif [ "$TP" = "4" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3
+# Inspect GPU
+BACKEND="CPU"
+if command -v nvidia-smi > /dev/null; then
+    echo "NVIDIA environment detected"
+    BACKEND="NVIDIA"
+elif command -v rocminfo > /dev/null; then
+    echo "ROCm environment detected"
+    BACKEND="ROCM"
 else
-    echo "Unsupported TP value: $TP"
-    exit 1
+    echo "No supported GPU environment detected"
+fi
+
+if [ "$BACKEND" == "NVIDIA" ]; then
+    # Reset GPU visibility settings
+    unset CUDA_VISIBLE_DEVICES
+    if [ "$TP" = "8" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+    elif [ "$TP" = "4" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1,2,3
+    elif [ "$TP" = "2" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1
+    else
+        export CUDA_VISIBLE_DEVICES=0,1,2,3
+    fi
+elif [ "$BACKEND" == "ROCM" ]; then
+    # Reset GPU visibility settings
+    unset HIP_VISIBLE_DEVICES
+    if [ "$TP" = "8" ]; then
+        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+    elif [ "$TP" = "4" ]; then
+        export HIP_VISIBLE_DEVICES=0,1,2,3
+    elif [ "$TP" = "2" ]; then
+        export HIP_VISIBLE_DEVICES=0,1
+    else
+        export HIP_VISIBLE_DEVICES=0,1,2,3
+    fi
 fi
 
 unset AITER_QUICK_REDUCE_QUANTIZATION ATOM_ENABLE_QK_NORM_ROPE_CACHE_QUANT_FUSION
@@ -31,7 +59,7 @@ export ATOM_ENABLE_QK_NORM_ROPE_CACHE_QUANT_FUSION=1
 unset AITER_LOG_MORE
 # export AITER_LOG_MORE=2
 
-server_log_dir="/workdir/eveline/atom_qwen235b/logs_vultr"
+server_log_dir="/workdir/eveline/atom_qwen235b/logs_vultr_no_max_args"
 mkdir -p ${server_log_dir}
 server_log_file="${server_log_dir}/server_running_qwen3_235b_a22b_instrct_FP8_TP${TP}_isl${input_len}_osl${output_len}_conc${concurrency}_infrrate.log"
 
@@ -61,8 +89,13 @@ MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instru
 rm -rf /root/.cache/atom/
 
 CMD="
-python -m atom.entrypoints.openai_server --model ${MODEL} -tp $TP --enable-expert-parallel --kv_cache_dtype fp8 --max-num-batched-tokens 20000 --max-model-len 16384 $profiler_args
+python -m atom.entrypoints.openai_server --model ${MODEL} -tp $TP --enable-expert-parallel --kv_cache_dtype fp8 $profiler_args
 "
+
+# CMD="
+# python -m atom.entrypoints.openai_server --model ${MODEL} -tp $TP --enable-expert-parallel --kv_cache_dtype fp8 --max-num-batched-tokens 20000 --max-model-len 16384 $profiler_args
+# "
+
 
 {
     echo "Running command: $CMD"
