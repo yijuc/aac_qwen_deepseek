@@ -6,7 +6,7 @@ enable_output_gemm=0
 MODEL="/data/huggingface/hub/models--deepseek-ai--DeepSeek-R1-0528/snapshots/4236a6af538feda4548eca9ab308586007567f52/"
 # ========================
 
-server_log_dir="/workdir/vllm_deepseekr1/logs_kunlun_0115"
+server_log_dir="/dockerx/vllm_deepseekr1/logs_kunlun_0115"
 mkdir -p ${server_log_dir}
 log_tag="vllm_fp8_tp${TP}_deepseek_r1"
 # log_tag="atom_fp8_tp${TP}_deepseek_r1_in1k_out1k_conc64_kernel"
@@ -31,7 +31,7 @@ if [ "$BACKEND" == "NVIDIA" ]; then
     elif [ "$TP" = "4" ]; then
         export CUDA_VISIBLE_DEVICES=0,1,2,3
     elif [ "$TP" = "2" ]; then
-        export CUDA_VISIBLE_DEVICES=0,1
+        export CUDA_VISIBLE_DEVICES=2,3
     else
         export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
     fi
@@ -50,11 +50,14 @@ elif [ "$BACKEND" == "ROCM" ]; then
 fi
 
 unset VLLM_ROCM_USE_AITER VLLM_USE_AITER_TRITON_ROPE VLLM_ROCM_USE_AITER_RMSNORM VLLM_ROCM_USE_AITER_TRITON_LINEAR VLLM_ROCM_QUICK_REDUCE_QUANTIZATION
-export VLLM_ROCM_USE_AITER=1
-export VLLM_USE_AITER_TRITON_ROPE=1
-export VLLM_ROCM_USE_AITER_RMSNORM=1
-export VLLM_ROCM_USE_AITER_TRITON_LINEAR=1
-export VLLM_ROCM_QUICK_REDUCE_QUANTIZATION="INT4"
+# export VLLM_ROCM_USE_AITER=1
+# export VLLM_USE_AITER_TRITON_ROPE=1
+# export VLLM_ROCM_USE_AITER_RMSNORM=1
+# export VLLM_ROCM_USE_AITER_TRITON_LINEAR=1
+# export VLLM_ROCM_QUICK_REDUCE_QUANTIZATION="INT4"
+unset VLLM_ATTENTION_BACKEND VLLM_USE_FLASHINFER_MOE_FP8
+export VLLM_ATTENTION_BACKEND=CUTLASS_MLA
+export VLLM_USE_FLASHINFER_MOE_FP8=1
 
 unset HIPBLASLT_LOG_FILE HIPBLASLT_LOG_MASK
 if [ "$enable_output_gemm" = "1" ]; then
@@ -75,23 +78,16 @@ fi
 
 
 # rm -rf /root/.cache/vllm/torch_compile_cache/
+# --block-size 16 
 
-
+# CMD="
+# python -m vllm.entrypoints.openai.api_server  --port 8000 --model $MODEL -tp $TP --kv_cache_dtype fp8 $profiler_args 
+# "
 CMD="
-vllm serve ${MODEL} \
-    --port 8000 \
-    --swap-space 16 \
-    --tensor-parallel-size $TP \
-    --max-num-batched-tokens 131072 \
-    --max-model-len 32768 \
-    --async-scheduling \
-    --kv-cache-dtype auto \
-    --quantization fp8 \
-    --block-size 1 \
-    --gpu-memory-utilization 0.95 \
-    --no-enable-prefix-caching \
-    --max-num-seqs 4096 \
-    --enable-chunked-prefill $profiler_args 
+vllm serve $MODEL \
+  --trust-remote-code \
+  --tensor-parallel-size $TP \
+  --enable-expert-parallel
 "
 
 {
