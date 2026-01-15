@@ -3,23 +3,50 @@
 TP=8  # or TP=4 (Currently deepseek-r1 cannot run with TP4)
 enable_profiler=0
 enable_output_gemm=0
-MODEL="/mnt/md0/models/DeepSeek-R1-0528"
+MODEL="/dev/shm/DeepSeek-R1-0528"
 # ========================
 
-server_log_dir="/workdir/vllm_deepseekr1/logs_dsr1_kunlun_0114"
+server_log_dir="/workdir/vllm_deepseekr1/logs_kunlun_0114"
 mkdir -p ${server_log_dir}
 log_tag="vllm_fp8_tp${TP}_deepseek_r1"
 # log_tag="atom_fp8_tp${TP}_deepseek_r1_in1k_out1k_conc64_kernel"
 server_log_file="${server_log_dir}/${log_tag}_server_running.log"
 
-unset HIP_VISIBLE_DEVICES
-if [ "$TP" = "8" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-elif [ "$TP" = "4" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3
+# Inspect GPU
+BACKEND="CPU"
+if command -v nvidia-smi > /dev/null; then
+    echo "NVIDIA environment detected"
+    BACKEND="NVIDIA"
+elif command -v rocminfo > /dev/null; then
+    echo "ROCm environment detected"
+    BACKEND="ROCM"
 else
-    echo "Unsupported TP value: $TP"
-    exit 1
+    echo "No supported GPU environment detected"
+fi
+if [ "$BACKEND" == "NVIDIA" ]; then
+    # Reset GPU visibility settings
+    unset CUDA_VISIBLE_DEVICES
+    if [ "$TP" = "8" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+    elif [ "$TP" = "4" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1,2,3
+    elif [ "$TP" = "2" ]; then
+        export CUDA_VISIBLE_DEVICES=0,1
+    else
+        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+    fi
+elif [ "$BACKEND" == "ROCM" ]; then
+    # Reset GPU visibility settings
+    unset HIP_VISIBLE_DEVICES
+    if [ "$TP" = "8" ]; then
+        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+    elif [ "$TP" = "4" ]; then
+        export HIP_VISIBLE_DEVICES=0,1,2,3
+    elif [ "$TP" = "2" ]; then
+        export HIP_VISIBLE_DEVICES=0,1
+    else
+        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+    fi
 fi
 
 unset VLLM_ROCM_USE_AITER VLLM_USE_AITER_TRITON_ROPE VLLM_ROCM_USE_AITER_RMSNORM VLLM_ROCM_USE_AITER_TRITON_LINEAR VLLM_ROCM_QUICK_REDUCE_QUANTIZATION

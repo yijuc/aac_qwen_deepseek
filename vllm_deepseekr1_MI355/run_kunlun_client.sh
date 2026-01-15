@@ -7,11 +7,11 @@ enable_profiler=0
 TP=8
 KUNLUN_DIR="/opt/kunlun-benchmark"
 # Model path configuration
-MODEL="/mnt/md0/models/DeepSeek-R1-0528"
+MODEL="/dev/shm/DeepSeek-R1-0528"
 # Port
 PORT=8000
 # Directory for storing client logs
-client_log_dir="/workdir/vllm_qwen235b/logs_dsr1_kunlun_0114"
+client_log_dir="/workdir/vllm_qwen235b/logs_kunlun_0114"
 log_tag="results"
 # ========================================
 
@@ -37,7 +37,7 @@ if [ "$BACKEND" == "NVIDIA" ]; then
     elif [ "$TP" = "2" ]; then
         export CUDA_VISIBLE_DEVICES=0,1
     else
-        export CUDA_VISIBLE_DEVICES=0,1,2,3
+        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
     fi
 elif [ "$BACKEND" == "ROCM" ]; then
     # Reset GPU visibility settings
@@ -49,7 +49,7 @@ elif [ "$BACKEND" == "ROCM" ]; then
     elif [ "$TP" = "2" ]; then
         export HIP_VISIBLE_DEVICES=0,1
     else
-        export HIP_VISIBLE_DEVICES=0,1,2,3
+        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
     fi
 fi
 
@@ -76,10 +76,10 @@ export HF_OFFLINE=1
 # ================= Test Parameter Combinations =================
 # Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
 INPUT_OUTPUT_COMBOS=(
-#   "800 1000 1600 2000 400"
+#   "800 1000 1600 2000 200"
 #   "3000 3600 300 500 100"
-#   "3600 4400 1800 2200 200"
-#   "11000 15000 2500 2900 80"
+#   "3600 4400 1800 2200 100"
+  "11000 15000 2500 2900 80"
    "16000 20000 300 500 1"
 )
 
@@ -91,7 +91,7 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     # Calculate number of total prompts (Set to 4x concurrency)
     num_prompts=$((CONC * 4))
 
-    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
     LOG_FILE="${client_log_dir}/benchmark_${timestamp// /_}.log"
     temp_output=$(mktemp) # Create a temporary file for data extraction
 

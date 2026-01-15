@@ -1,6 +1,6 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch =====
-TP=4
+TP=8
 enable_profiler=0
 # ========================
 
@@ -14,9 +14,9 @@ else
     exit 1
 fi
 
-client_log_dir="/workdir/eveline/atom_qwen235b/logs_vultr"
+client_log_dir="/workdir/vllm_qwen235b/logs_0114_env"
 log_tag="results"
-
+mkdir -p ${client_log_dir}
 log_file=${1:-"benchmark_tp${TP}_${log_tag}.log"}
 csv_file=${2:-"benchmark_tp${TP}_${log_tag}.csv"}
 
@@ -33,16 +33,16 @@ if [ ! -f "${csv_file}" ]; then
 fi
 
 # MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
-MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
+MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
 
 PORT=8000
 configs=(
-    "1000 1000 256"
-    "1000 1000 128"
-    "4000 1000 128"
-    "4000 1000 64"
-    "10000 1000 64"
-    "10000 1000 32"
+    # "1000 1000 256"
+    "1024 1024 128"
+    # "4000 1000 128"
+    # "4000 1000 64"
+    # "10000 1000 64"
+    # "10000 1000 32"
     # 3.0~3.6k/0.3~0.5k
     # "3300 400 256"
     # 16~20k/0.3~0.5k
@@ -80,16 +80,19 @@ for config in "${configs[@]}"; do
     
     temp_output=$(mktemp)
     
-    python -m atom.benchmarks.benchmark_serving \
-    --model=$MODEL --backend=vllm --base-url=http://localhost:$PORT \
-    --dataset-name=random \
-    --random-input-len=${ISL} --random-output-len=${OSL} \
-    --random-range-ratio 1 \
-    --num-prompts=$num_prompts \
-    --max-concurrency=$CONC \
-    --request-rate=inf --ignore-eos \
-    --save-result --result-dir=${client_log_dir} --result-filename=$RESULT_FILENAME.json \
-    --percentile-metrics="ttft,tpot,itl,e2el" $profiler_args 2>&1 | tee -a ${log_file} | tee ${temp_output}
+    python -m vllm.entrypoints.cli.main bench serve \
+        --host localhost \
+        --port 8000 \
+        --model ${MODEL} \
+        --dataset-name random \
+        --random-input-len $ISL \
+        --random-output-len $OSL \
+        --max-concurrency $CONC \
+        --num-prompts $num_prompts \
+        --seed 123 \
+        --percentile-metrics ttft,tpot,itl,e2el \
+        --ignore-eos \
+        2>&1 | tee -a ${log_file} | tee ${temp_output}
 
     request_throughput=$(grep -i "Request throughput (req/s):" ${temp_output} | tail -1 | awk '{print $NF}')
     mean_ttft=$(grep "Mean TTFT (ms):" ${temp_output} | tail -1 | awk '{print $4}')

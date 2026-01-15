@@ -7,7 +7,7 @@ enable_profiler=0
 TP=8
 KUNLUN_DIR="/opt/kunlun-benchmark"
 # Model path configuration
-MODEL="/mnt/md0/models/Qwen3-235B-A22B-Instruct-2507-FP8"
+MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
 # Port
 PORT=8000
 # Directory for storing client logs
@@ -38,7 +38,7 @@ if [ "$BACKEND" == "NVIDIA" ]; then
     elif [ "$TP" = "2" ]; then
         export CUDA_VISIBLE_DEVICES=0,1
     else
-        export CUDA_VISIBLE_DEVICES=0,1,2,3
+        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
     fi
 elif [ "$BACKEND" == "ROCM" ]; then
     # Reset GPU visibility settings
@@ -50,7 +50,7 @@ elif [ "$BACKEND" == "ROCM" ]; then
     elif [ "$TP" = "2" ]; then
         export HIP_VISIBLE_DEVICES=0,1
     else
-        export HIP_VISIBLE_DEVICES=0,1,2,3
+        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
     fi
 fi
 
@@ -77,11 +77,11 @@ export HF_OFFLINE=1
 # ================= Test Parameter Combinations =================
 # Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
 INPUT_OUTPUT_COMBOS=(
-#   "800 1000 1600 2000 512"
+  "800 1000 1600 2000 128"
 #   "3000 3600 300 500 256"
 #   "3600 4400 1800 2200 256"
 #   "11000 15000 2500 2900 94"
-   "16000 20000 300 500 1" # tp4, tp8 failed
+#    "16000 20000 300 500 1" # tp4, tp8 failed
 )
 
 # ================= Main Loop =================
@@ -92,7 +92,7 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     # Calculate number of total prompts (Set to 4x concurrency)
     num_prompts=$((CONC * 4))
 
-    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
     LOG_FILE="${client_log_dir}/benchmark_${timestamp// /_}.log"
     temp_output=$(mktemp) # Create a temporary file for data extraction
 

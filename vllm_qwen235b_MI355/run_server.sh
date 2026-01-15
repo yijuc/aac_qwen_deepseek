@@ -4,8 +4,9 @@ TP=8  # TP=8 or 4
 enable_profiler=0
 enable_output_gemm=0
 
-MODEL="/mnt/md0/models/Qwen3-235B-A22B-Instruct-2507-FP8"
-server_log_dir="/workdir/vllm_qwen235b/logs_kunlun_0114"
+# MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
+MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
+server_log_dir="/workdir/vllm_qwen235b/logs_0114_env"
 
 ## case
 input_len=1000
@@ -35,7 +36,7 @@ if [ "$BACKEND" == "NVIDIA" ]; then
     elif [ "$TP" = "2" ]; then
         export CUDA_VISIBLE_DEVICES=0,1
     else
-        export CUDA_VISIBLE_DEVICES=0,1,2,3
+        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
     fi
 elif [ "$BACKEND" == "ROCM" ]; then
     # Reset GPU visibility settings
@@ -47,15 +48,16 @@ elif [ "$BACKEND" == "ROCM" ]; then
     elif [ "$TP" = "2" ]; then
         export HIP_VISIBLE_DEVICES=0,1
     else
-        export HIP_VISIBLE_DEVICES=0,1,2,3
+        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
     fi
 fi
 
-unset VLLM_ROCM_QUICK_REDUCE_QUANTIZATION VLLM_V1_USE_PREFILL_DECODE_ATTENTION VLLM_ROCM_USE_AITER VLLM_ROCM_USE_AITER_MHA SAFETENSORS_FAST_GPU
+unset VLLM_ROCM_QUICK_REDUCE_QUANTIZATION VLLM_V1_USE_PREFILL_DECODE_ATTENTION VLLM_ROCM_USE_AITER VLLM_ROCM_USE_AITER_MOE VLLM_USE_TRITON_FLASH_ATTN SAFETENSORS_FAST_GPU
 export VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4
 export VLLM_V1_USE_PREFILL_DECODE_ATTENTION=1
 export VLLM_ROCM_USE_AITER=1
-export VLLM_ROCM_USE_AITER_MHA=1
+export VLLM_ROCM_USE_AITER_MOE=1
+export VLLM_USE_TRITON_FLASH_ATTN=0
 export SAFETENSORS_FAST_GPU=1
 
 # ===== Log file ======
@@ -96,9 +98,13 @@ fi
 CMD="
 vllm serve ${MODEL} \
     --tensor-parallel-size $TP \
-    --max-num-seqs 256 \
-    --max-num-batched-tokens 8192 \
-    --compilation-config '{\"custom_ops\":[\"-rms_norm\",\"-quant_fp8\"],\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}' \
+    --enable-expert-parallel \
+    --kv-cache-dtype fp8
+    --max-num-seqs 512 \
+    --max-model-len 32768 \
+    --enable-chunked-prefill \
+    --max-num-batched-tokens 32768 \
+    --compilation-config '{\"cudagraph_mode\": \"FULL_AND_PIECEWISE\", \"custom_ops\": [\"-rms_norm\", \"-quant_fp8\", \"-silu_and_mul\"]}' \
     --no-enable-prefix-caching
 "
 

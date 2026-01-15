@@ -34,23 +34,23 @@ if [ ! -f "${csv_file}" ]; then
 fi
 
 # MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1-0528"
-MODEL="/mnt/md0/models/DeepSeek-R1-0528"
+MODEL="/dev/shm/DeepSeek-R1-0528"
 
 echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
 
 PORT=8000
 configs=(
-    # "1024 1024 4"
-    # "1024 1024 8"
-    # "1024 1024 16"
-    # "1024 1024 32"
-    # "1024 1024 64"
-    # "1024 1024 128"
+    "1024 1024 4"
+    "1024 1024 8"
+    "1024 1024 16"
+    "1024 1024 32"
+    "1024 1024 64"
+    "1024 1024 128"
     "4096 1024 64"
     "4096 1024 128"
     "10240 1024 32"
     "10240 1024 64"
-    # "10240 1024 128"
+    "10240 1024 128"
 )
 
 for config in "${configs[@]}"; do
@@ -63,7 +63,7 @@ for config in "${configs[@]}"; do
         profiler_args=" --profile"
     fi
 
-    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
 
     echo "" | tee -a ${log_file}
     echo "========================================" | tee -a ${log_file}
@@ -77,16 +77,19 @@ for config in "${configs[@]}"; do
     
     temp_output=$(mktemp)
     # python /root/bench_serving/benchmark_serving.py \
-    PYTHONPATH=/ATOM/atom python -m benchmarks.benchmark_serving \
-    --model=$MODEL --backend=vllm --base-url=http://localhost:$PORT \
-    --dataset-name=random \
-    --random-input-len=${ISL} --random-output-len=${OSL} \
-    --random-range-ratio 0.8 \
-    --num-prompts=$num_prompts \
-    --max-concurrency=$CONC \
-    --request-rate=inf --ignore-eos \
-    --save-result --result-dir=${client_log_dir} --result-filename=$RESULT_FILENAME.json \
-    --percentile-metrics="ttft,tpot,itl,e2el" $profiler_args 2>&1 | tee -a ${log_file} | tee ${temp_output}
+    python -m vllm.entrypoints.cli.main bench serve \
+        --host localhost \
+        --port 8000 \
+        --model ${MODEL} \
+        --dataset-name random \
+        --random-input-len $ISL \
+        --random-output-len $OSL \
+        --max-concurrency $CONC \
+        --num-prompts $num_prompts \
+        --seed 123 \
+        --percentile-metrics ttft,tpot,itl,e2el \
+        --ignore-eos \
+        $profiler_args 2>&1 | tee -a ${log_file} | tee ${temp_output}
 
     request_throughput=$(grep -i "Request throughput (req/s):" ${temp_output} | tail -1 | awk '{print $NF}')
     mean_ttft=$(grep "Mean TTFT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
