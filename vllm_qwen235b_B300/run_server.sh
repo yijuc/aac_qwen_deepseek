@@ -1,17 +1,17 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch, output gemm switch =====
-TP=2  # TP=8 or 4
+TP=8  # TP=8 or 4
 enable_profiler=0
 enable_output_gemm=0
 
 # MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
 MODEL="/data/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
-server_log_dir="/dockerx/vllm_qwen235b/logs_kunlun_0115"
+server_log_dir="/dockerx/vllm_qwen235b/logs_0122_kunlun_sla_ep_random"
 
 ## case
-input_len=1000
-output_len=1000
-concurrency=256
+input_len=3300
+output_len=400
+concurrency=130
 PORT=8000
 # ========================
 
@@ -53,14 +53,6 @@ elif [ "$BACKEND" == "ROCM" ]; then
     fi
 fi
 
-# unset VLLM_ROCM_QUICK_REDUCE_QUANTIZATION VLLM_V1_USE_PREFILL_DECODE_ATTENTION VLLM_ROCM_USE_AITER VLLM_ROCM_USE_AITER_MOE VLLM_USE_TRITON_FLASH_ATTN SAFETENSORS_FAST_GPU
-# export VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4
-# export VLLM_V1_USE_PREFILL_DECODE_ATTENTION=1
-# export VLLM_ROCM_USE_AITER=1
-# export VLLM_ROCM_USE_AITER_MOE=1
-# export VLLM_USE_TRITON_FLASH_ATTN=0
-# export SAFETENSORS_FAST_GPU=1
-
 # ===== Log file ======
 # unset AMD_LOG_LEVEL
 # export AMD_LOG_LEVEL=3
@@ -88,20 +80,22 @@ if [ "$enable_profiler" = "1" ]; then
     export VLLM_TORCH_PROFILER_WITH_STACK=1
     export VLLM_TORCH_PROFILER_RECORD_SHAPES=1  
     profiler_dir="${server_log_dir}/qwen3_235b_a22b_instrct_2507_FP8_TP${TP}_isl${input_len}_osl${output_len}_conc${concurrency}_infrrate"
+    export VLLM_TORCH_PROFILER_DIR="${profiler_dir}"
     mkdir -p $profiler_dir
-    profiler_args=" --torch-profiler-dir ${profiler_dir}"
+    # profiler_args=" --enforce-eager"
 fi
 
-
 rm -rf /root/.cache/vllm/torch_compile_cache/
-# python -m vllm.entrypoints.openai.api_server --model $MODEL -tp $TP --block-size 16 --kv_cache_dtype fp8 $profiler_args
-# vllm serve ${MODEL} \
-#   --tensor-parallel-size $TP \
-#   --no-enable-prefix-caching \
-#   --kv_cache_dtype fp8
+
+## TP+EP (for 16k)
 CMD="
-python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 $profiler_args
+python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --enable-expert-parallel $profiler_args
 "
+
+## TP only (for others)
+# CMD="
+# python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 $profiler_args
+# "
 
 {
     echo "Running command: $CMD"

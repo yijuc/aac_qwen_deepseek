@@ -4,55 +4,17 @@ enable_profiler=0
 
 # ====== Setting TP, Model path, Kunlun-benchmark directory, Port, log directory =====
 # TP: only used for metadata/filename, will follow the actual server setting
-TP=2
+TP=8
 KUNLUN_DIR="/opt/kunlun-benchmark"
 # Model path configuration
 MODEL="/data/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
 # Port
 PORT=8000
 # Directory for storing client logs
-client_log_dir="/dockerx/vllm_qwen235b/logs_kunlun_0115"
+client_log_dir="/dockerx/vllm_qwen235b/logs_0122_kunlun_sla_ep_random"
 log_tag="results"
 # ========================================
 
-
-# Inspect GPU
-BACKEND="CPU"
-if command -v nvidia-smi > /dev/null; then
-    echo "NVIDIA environment detected"
-    BACKEND="NVIDIA"
-elif command -v rocminfo > /dev/null; then
-    echo "ROCm environment detected"
-    BACKEND="ROCM"
-else
-    echo "No supported GPU environment detected"
-fi
-
-if [ "$BACKEND" == "NVIDIA" ]; then
-    # Reset GPU visibility settings
-    unset CUDA_VISIBLE_DEVICES
-    if [ "$TP" = "8" ]; then
-        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-    elif [ "$TP" = "4" ]; then
-        export CUDA_VISIBLE_DEVICES=0,1,2,3
-    elif [ "$TP" = "2" ]; then
-        export CUDA_VISIBLE_DEVICES=0,1
-    else
-        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-    fi
-elif [ "$BACKEND" == "ROCM" ]; then
-    # Reset GPU visibility settings
-    unset HIP_VISIBLE_DEVICES
-    if [ "$TP" = "8" ]; then
-        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-    elif [ "$TP" = "4" ]; then
-        export HIP_VISIBLE_DEVICES=0,1,2,3
-    elif [ "$TP" = "2" ]; then
-        export HIP_VISIBLE_DEVICES=0,1
-    else
-        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-    fi
-fi
 
 mkdir -p ${client_log_dir}
 # Define result file names (Defaults to benchmark_tpX_results.log/csv if not provided as arguments)
@@ -73,15 +35,17 @@ if [ ! -f "${csv_file}" ]; then
     echo "TimeStamp,MIN_Input,MAX_Input,MIN_Output,MAX_Output,Num_Prompts,Generate_Token_Throughput,Total_Token_Throughput,Request_throughput_req_s,Concurrency,Mean_TTFT_ms,Mean_TPOT_ms" > "${csv_file}"
 fi
 
+unset HF_OFFLINE KUNLUN_RANDOM
 export HF_OFFLINE=1
+export KUNLUN_RANDOM=0
 # ================= Test Parameter Combinations =================
 # Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
 INPUT_OUTPUT_COMBOS=(
-  "800 1000 1600 2000 190"
-#   "3000 3600 300 500 256"
-#   "3600 4400 1800 2200 256"
-#   "11000 15000 2500 2900 94"
-#    "16000 20000 300 500 1" # tp4, tp8 failed
+  "800 1000 1600 2000 400"
+  "3000 3600 300 500 256"
+  "3600 4400 1800 2200 256"
+  "11000 15000 2500 2900 150"
+   "16000 20000 300 500 150"
 )
 
 # ================= Main Loop =================
@@ -91,6 +55,11 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
 
     # Calculate number of total prompts (Set to 4x concurrency)
     num_prompts=$((CONC * 4))
+
+    profiler_args=""
+    if [ "$enable_profiler" = "1" ]; then
+        profiler_args=" --profile "
+    fi
 
     timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
     LOG_FILE="${client_log_dir}/benchmark_${timestamp// /_}.log"
@@ -106,6 +75,7 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
 
     # 3. Execute Kunlun Benchmark
     # Redirect stderr to stdout to ensure all output is captured for logging
+    CMD="
     ${KUNLUN_DIR}/kunlun-benchmark vllm server \
         --port $PORT \
         --work_mode manual \
@@ -117,26 +87,28 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
         --query_num ${num_prompts} \
         --result_dir $client_log_dir \
         --model_path $MODEL \
-        --is_sla False \
+        --is_sla True \
         --sla_decode 50 \
         --sla_prefill 3000 \
         --tp $TP \
-        2>&1 | tee -a "$LOG_FILE" | tee "$temp_output"
+    "
+    echo "Running Command: $CMD" | tee -a "$LOG_FILE"
+    eval $CMD 2>&1 | tee -a "$LOG_FILE" | tee "$temp_output"
 
     # 4. Data Extraction
-    # 構建搜尋字串，對應你的 TP, ISL, OSL, CONC, num_prompts
-    # 注意：Kunlun 檔名中 input 是用 $MAX_INPUT&$MIN_INPUT，output 同理
+    # PATTERN FOR SEARCH: TP, ISL, OSL, CONC, num_prompts
+    # Attention: Kunlun filename, input is $MAX_INPUT&$MIN_INPUT, output is $MAX_OUTPUT&$MIN_OUTPUT
     FILE_PATTERN="*_normal_distribution_unknown_server_vllm_tp-${TP}_${MAX_INPUT}\&${MIN_INPUT}_${MAX_OUTPUT}\&${MIN_OUTPUT}_${CONC}_${num_prompts}_*_ai_perf_benchmark.json"
     
     echo "Searching for pattern: ${FILE_PATTERN}"
     
-    # 進入日誌目錄搜尋符合當前參數、且最新生成的那個 json
+    # Search the latest json can match pattern
     LATEST_JSON=$(ls -t ${client_log_dir}/${FILE_PATTERN} 2>/dev/null | head -n 1)
 
     if [ -z "$LATEST_JSON" ] || [ ! -f "$LATEST_JSON" ]; then
         echo "Error: Could not find JSON file matching current parameters."
         echo "Expected Pattern: ${FILE_PATTERN}"
-        # Fallback 邏輯：如果精確匹配不到，至少抓目錄下最新的 JSON
+        # Fallback: If cannot match match, use latest json file.
         LATEST_JSON=$(ls -t ${client_log_dir}/*.json 2>/dev/null | head -n 1)
         echo "Using fallback (latest overall JSON): $LATEST_JSON"
     else
