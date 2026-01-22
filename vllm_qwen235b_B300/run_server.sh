@@ -89,12 +89,12 @@ rm -rf /root/.cache/vllm/torch_compile_cache/
 
 ## TP+EP (for 16k)
 CMD="
-python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --enable-expert-parallel $profiler_args
+python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --enable-expert-parallel --no-enable-prefix-caching $profiler_args
 "
 
 ## TP only (for others)
 # CMD="
-# python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 $profiler_args
+# python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --no-enable-prefix-caching $profiler_args
 # "
 
 {
