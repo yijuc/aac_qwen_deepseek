@@ -1,7 +1,9 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch =====
-TP=4
+TP=8
 enable_profiler=0
+MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
+PORT=8000
 # ========================
 
 unset HIP_VISIBLE_DEVICES
@@ -14,7 +16,7 @@ else
     exit 1
 fi
 
-client_log_dir="/workdir/vllm_qwen235b/logs_0120_large"
+client_log_dir="/workdir/vllm_qwen235b/logs_0120_kunlun_profiler"
 log_tag="results"
 mkdir -p ${client_log_dir}
 log_file=${1:-"benchmark_tp${TP}_${log_tag}.log"}
@@ -29,13 +31,10 @@ log_file="${client_log_dir}/${log_file}"
 csv_file="${client_log_dir}/${csv_file}"
 
 if [ ! -f "${csv_file}" ]; then
-    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
+    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Generate_Token_Throughput,Total_Token_Throughput" > "${csv_file}"
 fi
 
-# MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
-MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
 
-PORT=8000
 configs=(
     # "1000 1000 256"
     # "1024 1024 128"
@@ -53,8 +52,7 @@ configs=(
     # "4000 2000 128"
     # 11~15k/2.5~2.9k
     # "13000 2700 64"
-
-    "20000 300 20"
+    "20000 300 512"
 )
 
 for config in "${configs[@]}"; do
@@ -100,8 +98,9 @@ for config in "${configs[@]}"; do
     mean_ttft=$(grep "Mean TTFT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
     mean_tpot=$(grep "Mean TPOT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
     token_throughput=$(grep "Total Token throughput (tok/s):" ${temp_output} | tail -1 | awk '{print $5}')
+    generate_token_throughput=$(grep "Output token throughput (tok/s):" ${temp_output} | tail -1 | awk '{print $5}')
     
-    echo "${timestamp},${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> ${csv_file}
+    echo "${timestamp},${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${generate_token_throughput},${token_throughput}" >> ${csv_file}
     
     rm -f ${temp_output}
     

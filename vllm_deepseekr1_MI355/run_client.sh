@@ -8,16 +8,6 @@ PORT=8000
 
 # ========================
 
-unset HIP_VISIBLE_DEVICES
-if [ "$TP" = "8" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-elif [ "$TP" = "4" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3
-else
-    echo "Unsupported TP value: $TP"
-    exit 1
-fi
-
 mkdir -p ${client_log_dir}
 log_tag="results"
 
