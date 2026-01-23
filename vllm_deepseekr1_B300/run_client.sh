@@ -2,6 +2,8 @@
 # ====== Setting TP, Profiler switch =====
 TP=8  # or TP=4
 enable_profiler=0
+MODEL="/data/huggingface/hub/models--deepseek-ai--DeepSeek-R1-0528/snapshots/4236a6af538feda4548eca9ab308586007567f52/"
+PORT=8000
 # ========================
 
 unset HIP_VISIBLE_DEVICES
@@ -14,7 +16,7 @@ else
     exit 1
 fi
 
-client_log_dir="/dockerx/vllm_deepseekr1/logs_dsr1_0114"
+client_log_dir="/dockerx/vllm_deepseekr1/logs_0115_no_ep"
 mkdir -p ${client_log_dir}
 log_tag="results"
 
@@ -30,27 +32,21 @@ log_file="${client_log_dir}/${log_file}"
 csv_file="${client_log_dir}/${csv_file}"
 
 if [ ! -f "${csv_file}" ]; then
-    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
+    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Generate_Token_Throughput,Total_Token_Throughput" > "${csv_file}"
 fi
 
-# MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1-0528"
-MODEL="/dev/shm/DeepSeek-R1-0528"
-
-echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
-
-PORT=8000
 configs=(
-    "1024 1024 4"
-    "1024 1024 8"
-    "1024 1024 16"
-    "1024 1024 32"
+    # "1024 1024 4"
+    # "1024 1024 8"
+    # "1024 1024 16"
+    # "1024 1024 32"
     "1024 1024 64"
     "1024 1024 128"
     "4096 1024 64"
     "4096 1024 128"
     "10240 1024 32"
     "10240 1024 64"
-    "10240 1024 128"
+    # "10240 1024 128"
 )
 
 for config in "${configs[@]}"; do
@@ -95,8 +91,9 @@ for config in "${configs[@]}"; do
     mean_ttft=$(grep "Mean TTFT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
     mean_tpot=$(grep "Mean TPOT (ms):" ${temp_output} | tail -1 | awk '{print $4}')
     token_throughput=$(grep "Total Token throughput (tok/s):" ${temp_output} | tail -1 | awk '{print $5}')
+    generate_token_throughput=$(grep "Output token throughput (tok/s):" ${temp_output} | tail -1 | awk '{print $5}')
     
-    echo "${timestamp},${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> ${csv_file}
+    echo "${timestamp},${ISL},${OSL},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${generate_token_throughput},${token_throughput}" >> ${csv_file}    
     
     rm -f ${temp_output}
     

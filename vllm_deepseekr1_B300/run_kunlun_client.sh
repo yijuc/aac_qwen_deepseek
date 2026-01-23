@@ -11,47 +11,10 @@ MODEL="/data/huggingface/hub/models--deepseek-ai--DeepSeek-R1-0528/snapshots/423
 # Port
 PORT=8000
 # Directory for storing client logs
-client_log_dir="/dockerx/vllm_deepseekr1/logs_kunlun_0115"
+client_log_dir="/dockerx/vllm_deepseekr1/logs_test"
 log_tag="results"
 # ========================================
 
-# Inspect GPU
-BACKEND="CPU"
-if command -v nvidia-smi > /dev/null; then
-    echo "NVIDIA environment detected"
-    BACKEND="NVIDIA"
-elif command -v rocminfo > /dev/null; then
-    echo "ROCm environment detected"
-    BACKEND="ROCM"
-else
-    echo "No supported GPU environment detected"
-fi
-
-if [ "$BACKEND" == "NVIDIA" ]; then
-    # Reset GPU visibility settings
-    unset CUDA_VISIBLE_DEVICES
-    if [ "$TP" = "8" ]; then
-        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-    elif [ "$TP" = "4" ]; then
-        export CUDA_VISIBLE_DEVICES=0,1,2,3
-    elif [ "$TP" = "2" ]; then
-        export CUDA_VISIBLE_DEVICES=0,1
-    else
-        export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-    fi
-elif [ "$BACKEND" == "ROCM" ]; then
-    # Reset GPU visibility settings
-    unset HIP_VISIBLE_DEVICES
-    if [ "$TP" = "8" ]; then
-        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-    elif [ "$TP" = "4" ]; then
-        export HIP_VISIBLE_DEVICES=0,1,2,3
-    elif [ "$TP" = "2" ]; then
-        export HIP_VISIBLE_DEVICES=0,1
-    else
-        export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-    fi
-fi
 
 mkdir -p ${client_log_dir}
 # Define result file names (Defaults to benchmark_tpX_results.log/csv if not provided as arguments)
@@ -72,15 +35,17 @@ if [ ! -f "${csv_file}" ]; then
     echo "TimeStamp,MIN_Input,MAX_Input,MIN_Output,MAX_Output,Num_Prompts,Generate_Token_Throughput,Total_Token_Throughput,Request_throughput_req_s,Concurrency,Mean_TTFT_ms,Mean_TPOT_ms" > "${csv_file}"
 fi
 
+unset HF_OFFLINE KUNLUN_RANDOM
 export HF_OFFLINE=1
+# export KUNLUN_RANDOM=0
 # ================= Test Parameter Combinations =================
 # Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
 INPUT_OUTPUT_COMBOS=(
-#   "800 1000 1600 2000 170"
-#   "3000 3600 300 500 92"
-#   "3600 4400 1800 2200 88"
-#   "11000 15000 2500 2900 35"
-   "16000 20000 300 500 32"
+  "800 1000 1600 2000 160"
+  "3000 3600 300 500 68"
+  "3600 4400 1800 2200 88"
+  "11000 15000 2500 2900 36"
+   "16000 20000 300 500 24"
 )
 
 # ================= Main Loop =================
@@ -98,6 +63,13 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     # 2. Display start message
     echo "" | tee -a "$LOG_FILE"
     echo "========================================" | tee -a "$LOG_FILE"
+    echo "Host: $(hostname)" | tee -a "$LOG_FILE"
+    echo "Envs: " | tee -a "$LOG_FILE"
+    printenv | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
+
+    echo "" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
     echo "Running benchmark at: ${timestamp}" | tee -a "$LOG_FILE"
     echo "  Config: In[${MIN_INPUT}-${MAX_INPUT}], Out[${MIN_OUTPUT}-${MAX_OUTPUT}]" | tee -a "$LOG_FILE"
     echo "  Concurrency: ${CONC}, Prompts: ${num_prompts}" | tee -a "$LOG_FILE"
@@ -105,6 +77,7 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
 
     # 3. Execute Kunlun Benchmark
     # Redirect stderr to stdout to ensure all output is captured for logging
+    CMD="
     ${KUNLUN_DIR}/kunlun-benchmark vllm server \
         --port $PORT \
         --work_mode manual \
@@ -120,24 +93,33 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
         --sla_decode 50 \
         --sla_prefill 3000 \
         --tp $TP \
-        2>&1 | tee -a "$LOG_FILE" | tee "$temp_output"
+    "
+    echo "" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
+    echo "Running Command: $CMD" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
+    eval $CMD 2>&1 | tee -a "$LOG_FILE" | tee "$temp_output"
 
     # 4. Data Extraction
-    # Find the most recently generated JSON result file
-    LATEST_JSON=$(ls -t ${client_log_dir}/*.json 2>/dev/null | head -n 1)
+    # PATTERN FOR SEARCH: TP, ISL, OSL, CONC, num_prompts
+    # Attention: Kunlun filename, input is $MAX_INPUT&$MIN_INPUT, output is $MAX_OUTPUT&$MIN_OUTPUT
+    FILE_PATTERN="*_normal_distribution_unknown_server_vllm_tp-${TP}_${MAX_INPUT}\&${MIN_INPUT}_${MAX_OUTPUT}\&${MIN_OUTPUT}_${CONC}_${num_prompts}_*_ai_perf_benchmark.json"
 
-    if [ -z "$LATEST_JSON" ]; then
-        echo "Warning: No JSON result found in ${client_log_dir}"
-        # Set default values to prevent CSV misalignment
-        request_throughput="N/A"
-        mean_ttft="N/A"
-        mean_tpot="N/A"
-        token_throughput="N/A"
-        generate_token_throughput="N/A"
+    echo "Searching for pattern: ${FILE_PATTERN}"
+
+    # Search the latest json can match pattern
+    LATEST_JSON=$(ls -t ${client_log_dir}/${FILE_PATTERN} 2>/dev/null | head -n 1)
+
+    if [ -z "$LATEST_JSON" ] || [ ! -f "$LATEST_JSON" ]; then
+        echo "Error: Could not find JSON file matching current parameters."
+        echo "Expected Pattern: ${FILE_PATTERN}"
+        # Fallback: If cannot match match, use latest json file.
+        LATEST_JSON=$(ls -t ${client_log_dir}/*.json 2>/dev/null | head -n 1)
+        echo "Using fallback (latest overall JSON): $LATEST_JSON"
     else
-        echo "Parsing result from: $LATEST_JSON"
-
+        echo "Successfully matched JSON: $(basename "$LATEST_JSON")"
         # Use Python to read the specific Kunlun JSON structure
+
         METRICS=$(python3 -c "
 import sys, json
 try:

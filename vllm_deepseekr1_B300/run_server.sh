@@ -4,9 +4,9 @@ TP=8  # or TP=4 (Currently deepseek-r1 cannot run with TP4)
 enable_profiler=0
 enable_output_gemm=0
 MODEL="/data/huggingface/hub/models--deepseek-ai--DeepSeek-R1-0528/snapshots/4236a6af538feda4548eca9ab308586007567f52/"
+server_log_dir="/dockerx/vllm_deepseekr1/logs_test"
 # ========================
 
-server_log_dir="/dockerx/vllm_deepseekr1/logs_kunlun_0115"
 mkdir -p ${server_log_dir}
 log_tag="vllm_fp8_tp${TP}_deepseek_r1"
 # log_tag="atom_fp8_tp${TP}_deepseek_r1_in1k_out1k_conc64_kernel"
@@ -49,12 +49,6 @@ elif [ "$BACKEND" == "ROCM" ]; then
     fi
 fi
 
-unset VLLM_ROCM_USE_AITER VLLM_USE_AITER_TRITON_ROPE VLLM_ROCM_USE_AITER_RMSNORM VLLM_ROCM_USE_AITER_TRITON_LINEAR VLLM_ROCM_QUICK_REDUCE_QUANTIZATION
-# export VLLM_ROCM_USE_AITER=1
-# export VLLM_USE_AITER_TRITON_ROPE=1
-# export VLLM_ROCM_USE_AITER_RMSNORM=1
-# export VLLM_ROCM_USE_AITER_TRITON_LINEAR=1
-# export VLLM_ROCM_QUICK_REDUCE_QUANTIZATION="INT4"
 unset VLLM_ATTENTION_BACKEND VLLM_USE_FLASHINFER_MOE_FP8
 export VLLM_ATTENTION_BACKEND=CUTLASS_MLA
 export VLLM_USE_FLASHINFER_MOE_FP8=1
@@ -86,12 +80,11 @@ fi
 CMD="
 vllm serve $MODEL \
   --trust-remote-code \
-  --tensor-parallel-size $TP \
-  --enable-expert-parallel
+  --tensor-parallel-size $TP
 "
 
 {
     echo "Running command: $CMD"
     eval $CMD
 
-} 2>&1 | tee "$server_log_file"
+} 2>&1 | tee -a "$server_log_file"

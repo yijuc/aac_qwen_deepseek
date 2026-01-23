@@ -56,16 +56,18 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     # Calculate number of total prompts (Set to 4x concurrency)
     num_prompts=$((CONC * 4))
 
-    profiler_args=""
-    if [ "$enable_profiler" = "1" ]; then
-        profiler_args=" --profile "
-    fi
-
     timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
     LOG_FILE="${client_log_dir}/benchmark_${timestamp// /_}.log"
     temp_output=$(mktemp) # Create a temporary file for data extraction
 
     # 2. Display start message
+    echo "" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
+    echo "Host: $(hostname)" | tee -a "$LOG_FILE"
+    echo "Envs: " | tee -a "$LOG_FILE"
+    printenv | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
+
     echo "" | tee -a "$LOG_FILE"
     echo "========================================" | tee -a "$LOG_FILE"
     echo "Running benchmark at: ${timestamp}" | tee -a "$LOG_FILE"
@@ -87,21 +89,24 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
         --query_num ${num_prompts} \
         --result_dir $client_log_dir \
         --model_path $MODEL \
-        --is_sla True \
+        --is_sla False \
         --sla_decode 50 \
         --sla_prefill 3000 \
         --tp $TP \
     "
+    echo "" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
     echo "Running Command: $CMD" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
     eval $CMD 2>&1 | tee -a "$LOG_FILE" | tee "$temp_output"
 
     # 4. Data Extraction
     # PATTERN FOR SEARCH: TP, ISL, OSL, CONC, num_prompts
     # Attention: Kunlun filename, input is $MAX_INPUT&$MIN_INPUT, output is $MAX_OUTPUT&$MIN_OUTPUT
     FILE_PATTERN="*_normal_distribution_unknown_server_vllm_tp-${TP}_${MAX_INPUT}\&${MIN_INPUT}_${MAX_OUTPUT}\&${MIN_OUTPUT}_${CONC}_${num_prompts}_*_ai_perf_benchmark.json"
-    
+
     echo "Searching for pattern: ${FILE_PATTERN}"
-    
+
     # Search the latest json can match pattern
     LATEST_JSON=$(ls -t ${client_log_dir}/${FILE_PATTERN} 2>/dev/null | head -n 1)
 
