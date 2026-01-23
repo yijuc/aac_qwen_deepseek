@@ -3,7 +3,7 @@
 enable_profiler=0
 
 # ====== Setting TP, Model path, Kunlun-benchmark directory, Port, log directory =====
-# TP: only used for metadata/filename, will follow the actual server setting
+# TP: In the client, TP only used for metadata/filename. It will follow the actual server setting
 TP=8
 KUNLUN_DIR="/opt/kunlun-benchmark"
 # Model path configuration
@@ -11,7 +11,7 @@ MODEL="/data/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/sna
 # Port
 PORT=8000
 # Directory for storing client logs
-client_log_dir="/dockerx/vllm_qwen235b/logs_0122_kunlun_sla_ep_random"
+client_log_dir="/dockerx/vllm_qwen235b/logs_0122_kunlun_sla_random_ep_no-enable-prefix-caching"
 log_tag="results"
 # ========================================
 
@@ -37,7 +37,7 @@ fi
 
 unset HF_OFFLINE KUNLUN_RANDOM
 export HF_OFFLINE=1
-export KUNLUN_RANDOM=0
+# export KUNLUN_RANDOM=0
 # ================= Test Parameter Combinations =================
 # Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
 INPUT_OUTPUT_COMBOS=(
@@ -45,7 +45,7 @@ INPUT_OUTPUT_COMBOS=(
   "3000 3600 300 500 256"
   "3600 4400 1800 2200 256"
   "11000 15000 2500 2900 150"
-   "16000 20000 300 500 150"
+   "16000 20000 300 500 20"
 )
 
 # ================= Main Loop =================

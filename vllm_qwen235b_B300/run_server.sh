@@ -1,12 +1,12 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch, output gemm switch =====
-TP=8  # TP=8 or 4
+TP=8 # TP=8 or 4
 enable_profiler=0
 enable_output_gemm=0
 
 # MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
 MODEL="/data/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
-server_log_dir="/dockerx/vllm_qwen235b/logs_0122_kunlun_sla_ep_random"
+server_log_dir="/dockerx/vllm_qwen235b/logs_0122_kunlun_sla_random_noep_no-enable-prefix-caching"
 
 ## case
 input_len=3300
@@ -33,7 +33,7 @@ if [ "$BACKEND" == "NVIDIA" ]; then
     if [ "$TP" = "8" ]; then
         export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
     elif [ "$TP" = "4" ]; then
-        export CUDA_VISIBLE_DEVICES=0,1,2,3
+        export CUDA_VISIBLE_DEVICES=4,5,6,7
     elif [ "$TP" = "2" ]; then
         export CUDA_VISIBLE_DEVICES=0,1
     else
@@ -87,15 +87,15 @@ fi
 
 rm -rf /root/.cache/vllm/torch_compile_cache/
 
-## TP+EP (for 16k)
-CMD="
-python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --enable-expert-parallel --no-enable-prefix-caching $profiler_args
-"
+## TP+EP (for tp8)
+# CMD="
+# python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --enable-expert-parallel --no-enable-prefix-caching $profiler_args
+# "
 
 ## TP only (for others)
-# CMD="
-# python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --no-enable-prefix-caching $profiler_args
-# "
+CMD="
+python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --no-enable-prefix-caching $profiler_args
+"
 
 {
     echo "Running command: $CMD"
