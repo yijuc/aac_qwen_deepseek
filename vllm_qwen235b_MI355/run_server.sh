@@ -1,13 +1,11 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch, output gemm switch =====
-TP=8  # TP=8 or 4
+TP=4  # TP=8 or 4
 enable_profiler=0
 enable_output_gemm=0
-
 # MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
 MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
-server_log_dir="/workdir/vllm_qwen235b/logs_0114_env"
-
+server_log_dir="/workdir/vllm_qwen235b/logs_0120_large"
 ## case
 input_len=1000
 output_len=1000
@@ -65,7 +63,7 @@ export SAFETENSORS_FAST_GPU=1
 # export AMD_LOG_LEVEL=3
 # export AMD_LOG_LEVEL_FILE="/workdir/vllm_qwen235b/logs_amd_level3/qwen3_235b_a22b_instrct_FP8_TP${TP}_isl${input_len}_osl${output_len}_conc${concurrency}_infrrate_loglv3.log"
 
-unset AITER_LOG_MORE
+# unset AITER_LOG_MORE
 # export AITER_LOG_MORE=2
 
 mkdir -p ${server_log_dir}
@@ -112,5 +110,9 @@ vllm serve ${MODEL} \
     echo "Running command: $CMD"
     eval $CMD
 
-} 2>&1 | tee "$server_log_file"
+} 2>&1 | tee -a "$server_log_file"
 # } >> "$server_log_file" 2>&1
+
+unset CUDA_VISIBLE_DEVICES HIP_VISIBLE_DEVICES
+unset VLLM_ROCM_QUICK_REDUCE_QUANTIZATION VLLM_V1_USE_PREFILL_DECODE_ATTENTION VLLM_ROCM_USE_AITER VLLM_ROCM_USE_AITER_MOE VLLM_USE_TRITON_FLASH_ATTN SAFETENSORS_FAST_GPU
+unset AMD_LOG_LEVEL AITER_LOG_MORE HIPBLASLT_LOG_FILE HIPBLASLT_LOG_MASK

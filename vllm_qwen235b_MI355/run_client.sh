@@ -1,6 +1,6 @@
 #!/bin/bash
 # ====== Setting TP, Profiler switch =====
-TP=8
+TP=4
 enable_profiler=0
 # ========================
 
@@ -14,7 +14,7 @@ else
     exit 1
 fi
 
-client_log_dir="/workdir/vllm_qwen235b/logs_0114_env"
+client_log_dir="/workdir/vllm_qwen235b/logs_0120_large"
 log_tag="results"
 mkdir -p ${client_log_dir}
 log_file=${1:-"benchmark_tp${TP}_${log_tag}.log"}
@@ -38,7 +38,7 @@ MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
 PORT=8000
 configs=(
     # "1000 1000 256"
-    "1024 1024 128"
+    # "1024 1024 128"
     # "4000 1000 128"
     # "4000 1000 64"
     # "10000 1000 64"
@@ -53,6 +53,8 @@ configs=(
     # "4000 2000 128"
     # 11~15k/2.5~2.9k
     # "13000 2700 64"
+
+    "20000 300 20"
 )
 
 for config in "${configs[@]}"; do

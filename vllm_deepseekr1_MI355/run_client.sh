@@ -2,6 +2,10 @@
 # ====== Setting TP, Profiler switch =====
 TP=8  # or TP=4
 enable_profiler=0
+MODEL="/dev/shm/DeepSeek-R1-0528"
+client_log_dir="/workdir/vllm_deepseekr1/logs_test"
+PORT=8000
+
 # ========================
 
 unset HIP_VISIBLE_DEVICES
@@ -14,7 +18,6 @@ else
     exit 1
 fi
 
-client_log_dir="/workdir/vllm_deepseekr1/logs_dsr1_0114"
 mkdir -p ${client_log_dir}
 log_tag="results"
 
@@ -33,24 +36,31 @@ if [ ! -f "${csv_file}" ]; then
     echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
 fi
 
-# MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1-0528"
-MODEL="/dev/shm/DeepSeek-R1-0528"
 
-echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
-
-PORT=8000
 configs=(
     "1024 1024 4"
-    "1024 1024 8"
-    "1024 1024 16"
-    "1024 1024 32"
-    "1024 1024 64"
-    "1024 1024 128"
-    "4096 1024 64"
-    "4096 1024 128"
-    "10240 1024 32"
-    "10240 1024 64"
-    "10240 1024 128"
+    # "1024 1024 8"
+    # "1024 1024 16"
+    # "1024 1024 32"
+    # "1024 1024 64"
+    # "1024 1024 128"
+    # "1024 8192 4"
+    # "1024 8192 8"
+    # "1024 8192 16"
+    # "1024 8192 32"
+    # "1024 8192 64"
+    # "1024 8192 128"
+    # "4096 1024 64"
+    # "4096 1024 128"
+    # "8192 1024 4"
+    # "8192 1024 8"
+    # "8192 1024 16"
+    # "8192 1024 32"
+    # "8192 1024 64"
+    # "8192 1024 128"    
+    # "10240 1024 32"
+    # "10240 1024 64"
+    # "10240 1024 128"
 )
 
 for config in "${configs[@]}"; do

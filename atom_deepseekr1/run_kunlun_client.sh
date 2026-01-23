@@ -2,19 +2,12 @@
 # ====== Setting TP, Profiler switch =====
 TP=8  # or TP=4
 enable_profiler=0
+client_log_dir="/workdir/eveline/atom_deepseekr1/logs_kunlun_dsr1_atom_12241340"
+MODEL="/dev/shm/DeepSeek-R1-0528"
+PORT=8000
+KUNLUN_DIR="/workdir/kunlun-benchmark"
 # ========================
 
-unset HIP_VISIBLE_DEVICES
-if [ "$TP" = "8" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-elif [ "$TP" = "4" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3
-else
-    echo "Unsupported TP value: $TP"
-    exit 1
-fi
-
-client_log_dir="/workdir/atom_deepseekr1/logs_vultr_kunlun_benchmark_isSLA"
 mkdir -p ${client_log_dir}
 log_tag="results"
 
@@ -29,39 +22,43 @@ fi
 log_file="${client_log_dir}/${log_file}"
 csv_file="${client_log_dir}/${csv_file}"
 
+# Initialize CSV header if file does not exist
 if [ ! -f "${csv_file}" ]; then
-    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
+    echo "TimeStamp,MIN_Input,MAX_Input,MIN_Output,MAX_Output,Num_Prompts,Generate_Token_Throughput,Total_Token_Throughput,Request_throughput_req_s,Concurrency,Mean_TTFT_ms,Mean_TPOT_ms" > "${csv_file}"
 fi
 
-# MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1-0528"
-MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--deepseek-ai--DeepSeek-R1-0528/snapshots/4236a6af538feda4548eca9ab308586007567f52/"
-
-echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
-
-
-PORT=8000
-KUNLUN_DIR="/opt/kunlun-benchmark"
-
+unset HF_OFFLINE KUNLUN_RANDOM
 export HF_OFFLINE=1
-# ================= 測試參數組合 =================
-# 格式: MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT MAXCONC
+export KUNLUN_RANDOM=0
+# ================= Test Parameter Combinations =================
+# Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
 INPUT_OUTPUT_COMBOS=(
 #   "800 1000 1600 2000 400"
-#   "3000 3600 300 500 100"
-#   "3600 4400 1800 2200 200"
-#   "11000 15000 2500 2900 80"
-   "16000 20000 300 500 1"
+  "3000 3600 300 500 100"
+  "3600 4400 1800 2200 200"
+  "11000 15000 2500 2900 80"
+#    "16000 20000 300 500 26" # tp4, tp8 failed
 )
 
-# ================= 主迴圈 =================
+# ================= Main Loop =================
 for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
+    # 1. Parse parameters from current combo
     read -r MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC <<< "$COMBO"
-    
+
+    # Calculate number of total prompts (Set to 4x concurrency)
     num_prompts=$((CONC * 4))
-    
-    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+
+    timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
     LOG_FILE="${client_log_dir}/benchmark_${timestamp// /_}.log"
-    temp_output=$(mktemp) 
+    temp_output=$(mktemp) # Create a temporary file for data extraction
+
+    # 2. Display start message
+    echo "" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
+    echo "Host: $(hostname)" | tee -a "$LOG_FILE"
+    echo "Envs: " | tee -a "$LOG_FILE"
+    printenv | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
 
     echo "" | tee -a "$LOG_FILE"
     echo "========================================" | tee -a "$LOG_FILE"
@@ -70,6 +67,9 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     echo "  Concurrency: ${CONC}, Prompts: ${num_prompts}" | tee -a "$LOG_FILE"
     echo "========================================" | tee -a "$LOG_FILE"
 
+    # 3. Execute Kunlun Benchmark
+    # Redirect stderr to stdout to ensure all output is captured for logging
+    CMD="
     ${KUNLUN_DIR}/kunlun-benchmark vllm server \
         --port $PORT \
         --work_mode manual \
@@ -81,62 +81,85 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
         --query_num ${num_prompts} \
         --result_dir $client_log_dir \
         --model_path $MODEL \
-        #--is_sla True \
-        #--sla_decode 50 \
-        #--sla_prefill 3000 \
-        2>&1 | tee -a "$LOG_FILE" | tee "$temp_output"
+        --is_sla False \
+        --sla_decode 50 \
+        --sla_prefill 3000 \
+        --tp $TP \
+    "
+    echo "" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
+    echo "Running Command: $CMD" | tee -a "$LOG_FILE"
+    echo "========================================" | tee -a "$LOG_FILE"
+    eval $CMD 2>&1 | tee -a "$LOG_FILE" | tee "$temp_output"
 
-    LATEST_JSON=$(ls -t ${client_log_dir}/*.json 2>/dev/null | head -n 1)
+    # 4. Data Extraction
+    # PATTERN FOR SEARCH: TP, ISL, OSL, CONC, num_prompts
+    # Attention: Kunlun filename, input is $MAX_INPUT&$MIN_INPUT, output is $MAX_OUTPUT&$MIN_OUTPUT
+    FILE_PATTERN="*_normal_distribution_unknown_server_vllm_tp-${TP}_${MAX_INPUT}\&${MIN_INPUT}_${MAX_OUTPUT}\&${MIN_OUTPUT}_${CONC}_${num_prompts}_*_ai_perf_benchmark.json"
 
-    if [ -z "$LATEST_JSON" ]; then
-        echo "Warning: No JSON result found in ${client_log_dir}"
-        request_throughput="N/A"
-        mean_ttft="N/A"
-        mean_tpot="N/A"
-        token_throughput="N/A"
+    echo "Searching for pattern: ${FILE_PATTERN}"
+
+    # Search the latest json can match pattern
+    LATEST_JSON=$(ls -t ${client_log_dir}/${FILE_PATTERN} 2>/dev/null | head -n 1)
+
+    if [ -z "$LATEST_JSON" ] || [ ! -f "$LATEST_JSON" ]; then
+        echo "Error: Could not find JSON file matching current parameters."
+        echo "Expected Pattern: ${FILE_PATTERN}"
+        # Fallback: If cannot match match, use latest json file.
+        LATEST_JSON=$(ls -t ${client_log_dir}/*.json 2>/dev/null | head -n 1)
+        echo "Using fallback (latest overall JSON): $LATEST_JSON"
     else
-        echo "Parsing result from: $LATEST_JSON"
-        
+        echo "Successfully matched JSON: $(basename "$LATEST_JSON")"
+        # Use Python to read the specific Kunlun JSON structure
+
         METRICS=$(python3 -c "
 import sys, json
-
 try:
     with open(sys.argv[1], 'r') as f:
         data = json.load(f)
-    
-    # 進入 perf_result 層級
+
+    # Navigate to perf_result level
     res = data.get('perf_result', {})
-    
+
     # 1. Request Throughput (RPS)
     rps = res.get('queries_per_second', 'N/A')
-    
-    # 2. Mean TTFT (Prefill Time)
+
+    # 2. Mean TTFT (Average Prefill Time)
     ttft = res.get('average_prefill_time', 'N/A')
-    
-    # 3. Mean TPOT (Decode Time)
+
+    # 3. Mean TPOT (Average Decode Time)
     tpot = res.get('average_decode_time', 'N/A')
-    
-    # 4. Total Token Throughput
+
+    # 4. Total Token Throughput (TPPS)
     tps = res.get('total_tokens_per_second(tps)', 'N/A')
 
-    print(f'{rps},{ttft},{tpot},{tps}')
+    # 5. Generate Token Throughput (GTPS)
+    gtps = res.get('generate_tokens_per_second(tps)', 'N/A')
+
+    print(f'{rps},{ttft},{tpot},{tps},{gtps}')
 
 except Exception as e:
+    # Print parse error to stderr and return N/A placeholders to stdout
     sys.stderr.write(f'Python Parse Error: {e}\n')
-    print('N/A,N/A,N/A,N/A')
+    print('N/A,N/A,N/A,N/A,N/A')
 " "$LATEST_JSON")
 
-        IFS=',' read -r request_throughput mean_ttft mean_tpot token_throughput <<< "$METRICS"
+        # Split the CSV string returned by Python into bash variables
+        IFS=',' read -r request_throughput mean_ttft mean_tpot token_throughput generate_token_throughput <<< "$METRICS"
     fi
 
-    echo "${timestamp},${MIN_INPUT},${MAX_INPUT},${MIN_OUTPUT},${MAX_OUTPUT},${CONC},${num_prompts},${request_throughput},${mean_ttft},${mean_tpot},${token_throughput}" >> "$csv_file"
+    # 5. Write results to CSV
+    echo "${timestamp},${MIN_INPUT},${MAX_INPUT},${MIN_OUTPUT},${MAX_OUTPUT},${num_prompts},${generate_token_throughput},${token_throughput},${request_throughput},${CONC},${mean_ttft},${mean_tpot}" >> "$csv_file"
 
     echo "----------------------------------------------------------------"
-    echo "Run Complete." 
+    echo "Run Complete."
     echo "File: $LATEST_JSON"
     echo "RPS: $request_throughput | TTFT: $mean_ttft | TPOT: $mean_tpot"
     echo "----------------------------------------------------------------"
 
+    # 6. Cleanup and cooldown period
     rm -f "$temp_output"
     sleep 5
 done
+
+unset HF_OFFLINE KUNLUN_RANDOM

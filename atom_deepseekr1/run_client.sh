@@ -2,19 +2,12 @@
 # ====== Setting TP, Profiler switch =====
 TP=8  # or TP=4
 enable_profiler=0
+client_log_dir="/workdir/eveline/atom_deepseekr1/logs_dsr1_atom_12241340_test"
+MODEL="/dev/shm/DeepSeek-R1-0528"
+
 # ========================
 
-unset HIP_VISIBLE_DEVICES
-if [ "$TP" = "8" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-elif [ "$TP" = "4" ]; then
-    export HIP_VISIBLE_DEVICES=0,1,2,3
-else
-    echo "Unsupported TP value: $TP"
-    exit 1
-fi
 
-client_log_dir="/workdir/atom_deepseekr1/logs_dsr1_atom_12241340"
 mkdir -p ${client_log_dir}
 log_tag="results"
 
@@ -30,26 +23,23 @@ log_file="${client_log_dir}/${log_file}"
 csv_file="${client_log_dir}/${csv_file}"
 
 if [ ! -f "${csv_file}" ]; then
-    echo "TimeStamp,Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > "${csv_file}"
+    echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
 fi
 
-# MODEL="/shared/amdgpu/home/share/deepseek/DeepSeek-R1-0528"
-MODEL="/dev/shm/DeepSeek-R1-0528"
 
-echo "Input_Tokens,Output_Tokens,Max_Concurrency,Num_Prompts,Request_throughput_req_s,Mean_TTFT_ms,Mean_TPOT_ms,Token_Throughput" > ${csv_file}
 
 PORT=8000
 configs=(
-    # "1024 1024 4"
+    "1024 1024 4"
     # "1024 1024 8"
     # "1024 1024 16"
     # "1024 1024 32"
     # "1024 1024 64"
     # "1024 1024 128"
-    "4096 1024 64"
-    "4096 1024 128"
-    "10240 1024 32"
-    "10240 1024 64"
+    # "4096 1024 64"
+    # "4096 1024 128"
+    # "10240 1024 32"
+    # "10240 1024 64"
     # "10240 1024 128"
 )
 
@@ -63,7 +53,7 @@ for config in "${configs[@]}"; do
         profiler_args=" --profile"
     fi
 
-    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
 
     echo "" | tee -a ${log_file}
     echo "========================================" | tee -a ${log_file}
