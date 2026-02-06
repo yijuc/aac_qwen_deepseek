@@ -1,24 +1,42 @@
 #!/bin/bash
 # ====== Setting Profiler switch =====
-enable_profiler=0
-
+enable_profiler=${enable_profiler:-0}
+kunlun_is_random=${kunlun_is_random:-1}
+kunlun_use_sla=${kunlun_use_sla:-False}
 # ====== Setting TP, Model path, Kunlun-benchmark directory, Port, log directory =====
 # TP: only used for metadata/filename, will follow the actual server setting
-TP=8
-KUNLUN_DIR="/opt/kunlun-benchmark"
-# Model path configuration
-MODEL="/dev/shm/DeepSeek-R1-0528"
-# Port
-PORT=8000
-# Directory for storing client logs
-client_log_dir="/workdir/vllm_deepseekr1/logs_test"
-log_tag="results"
+TP=${TP:-8}
+KUNLUN_DIR=${KUNLUN_DIR:-"/opt/kunlun-benchmark"} # Kunlun benchmark tool
+MODEL=${MODEL:-"/dev/shm/DeepSeek-R1-0528"} # Model path configuration
+PORT=${PORT:-8000} # Port
+CLIENT_LOG_DIR=${CLIENT_LOG_DIR:-"/dockerx/eveline/vllm_deepseekr1/test"}
+log_tag=${log_tag:-"results"}
+# ================= Test Parameter Combinations =================
+# Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
+if [ $# -eq 5 ]; then
+    echo "Using arguments passed from Master script."
+    MIN_INPUT=$1
+    MAX_INPUT=$2
+    MIN_OUTPUT=$3
+    MAX_OUTPUT=$4
+    CONC=$5
+    INPUT_OUTPUT_COMBOS=("$MIN_INPUT $MAX_INPUT $MIN_OUTPUT $MAX_OUTPUT $CONC")
+else
+    echo "No arguments detected, using internal TEST_CASES."
+    INPUT_OUTPUT_COMBOS=(
+      "800 1000 1600 2000 186"
+    #   "3000 3600 300 500 74"
+    #   "3600 4400 1800 2200 136"
+    #   "11000 15000 2500 2900 63"
+    #   "16000 20000 300 500 10"
+    )
+fi
 # ========================================
 
-mkdir -p ${client_log_dir}
+mkdir -p ${CLIENT_LOG_DIR}
 # Define result file names (Defaults to benchmark_tpX_results.log/csv if not provided as arguments)
-log_file=${1:-"benchmark_tp${TP}_${log_tag}.log"}
-csv_file=${2:-"benchmark_tp${TP}_${log_tag}.csv"}
+log_file=${log_file:-"benchmark_tp${TP}_${log_tag}.log"}
+csv_file=${csv_file:-"benchmark_tp${TP}_${log_tag}.csv"}
 
 # Prefix filenames if profiler is enabled
 if [ "$enable_profiler" = "1" ]; then
@@ -26,8 +44,8 @@ if [ "$enable_profiler" = "1" ]; then
     csv_file="profiler_${csv_file}"
 fi
 
-log_file="${client_log_dir}/${log_file}"
-csv_file="${client_log_dir}/${csv_file}"
+log_file="${CLIENT_LOG_DIR}/${log_file}"
+csv_file="${CLIENT_LOG_DIR}/${csv_file}"
 
 # Initialize CSV header if file does not exist
 if [ ! -f "${csv_file}" ]; then
@@ -35,16 +53,7 @@ if [ ! -f "${csv_file}" ]; then
 fi
 
 export HF_OFFLINE=1
-export KUNLUN_RANDOM=0
-# ================= Test Parameter Combinations =================
-# Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
-INPUT_OUTPUT_COMBOS=(
-  "800 1000 1600 2000 220"
-#   "3000 3600 300 500 80"
-#   "3600 4400 1800 2200 130"
-#   "11000 15000 2500 2900 64"
-#    "16000 20000 300 500 12"
-)
+export KUNLUN_RANDOM=$kunlun_is_random
 
 # ================= Main Loop =================
 for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
@@ -55,7 +64,7 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     num_prompts=$((CONC * 4))
 
     timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
-    LOG_FILE="${client_log_dir}/benchmark_${timestamp// /_}.log"
+    LOG_FILE="${CLIENT_LOG_DIR}/benchmark_${timestamp// /_}.log"
     temp_output=$(mktemp) # Create a temporary file for data extraction
 
     # 2. Display start message
@@ -85,9 +94,9 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
         --min_output_len $MIN_OUTPUT \
         --concurrency ${CONC} \
         --query_num ${num_prompts} \
-        --result_dir $client_log_dir \
+        --result_dir $CLIENT_LOG_DIR \
         --model_path $MODEL \
-        --is_sla False \
+        --is_sla ${kunlun_use_sla} \
         --sla_decode 50 \
         --sla_prefill 3000 \
         --tp $TP \
@@ -106,13 +115,13 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     echo "Searching for pattern: ${FILE_PATTERN}"
 
     # Search the latest json can match pattern
-    LATEST_JSON=$(ls -t ${client_log_dir}/${FILE_PATTERN} 2>/dev/null | head -n 1)
+    LATEST_JSON=$(ls -t ${CLIENT_LOG_DIR}/${FILE_PATTERN} 2>/dev/null | head -n 1)
 
     if [ -z "$LATEST_JSON" ] || [ ! -f "$LATEST_JSON" ]; then
         echo "Error: Could not find JSON file matching current parameters."
         echo "Expected Pattern: ${FILE_PATTERN}"
         # Fallback: If cannot match match, use latest json file.
-        LATEST_JSON=$(ls -t ${client_log_dir}/*.json 2>/dev/null | head -n 1)
+        LATEST_JSON=$(ls -t ${CLIENT_LOG_DIR}/*.json 2>/dev/null | head -n 1)
         echo "Using fallback (latest overall JSON): $LATEST_JSON"
     else
         echo "Successfully matched JSON: $(basename "$LATEST_JSON")"
