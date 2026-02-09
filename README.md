@@ -63,11 +63,15 @@ cd vllm_qwen235b
 
 # Run kunlun-benchmark
 ## Download kunlun-benchmark pacakge
+### ubuntu 22.02
 for py3.12
 wget https://sinian-metrics-platform.oss-cn-hangzhou.aliyuncs.com/ai_perf/pack/kunlun_benchmark/main/ubuntu22.04/py3.12.8/kunlun-benchmark.tar.gz
 
 for py3.10
 wget https://sinian-metrics-platform.oss-cn-hangzhou.aliyuncs.com/ai_perf/pack/kunlun_benchmark/main/ubuntu22.04/py3.10.12/kunlun-benchmark.tar.gz
+### ubuntu 24.04
+https://sinian-metrics-platform.oss-cn-hangzhou.aliyuncs.com/ai_perf/pack/kunlun_benchmark/main/ubuntu24.04/py3.12.8/kunlun-benchmark.tar.gz
+
 
 tar -zxvf kunlun-benchmark.tar.gz
 
