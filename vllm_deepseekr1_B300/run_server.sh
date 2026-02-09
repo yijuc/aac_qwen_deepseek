@@ -4,7 +4,7 @@ TP=8  # or TP=4 (Currently deepseek-r1 cannot run with TP4)
 enable_profiler=0
 enable_output_gemm=0
 MODEL="/data/huggingface/hub/models--deepseek-ai--DeepSeek-R1-0528/snapshots/4236a6af538feda4548eca9ab308586007567f52/"
-server_log_dir="/dockerx/vllm_deepseekr1/logs_test"
+server_log_dir="/workdir/data/vllm_deepseekr1/logs_0202_kunlun_random_noep_no-enable-prefix-caching_fp8"
 # ========================
 
 mkdir -p ${server_log_dir}
@@ -77,10 +77,17 @@ fi
 # CMD="
 # python -m vllm.entrypoints.openai.api_server  --port 8000 --model $MODEL -tp $TP --kv_cache_dtype fp8 $profiler_args 
 # "
+# CMD="
+# vllm serve $MODEL \
+#   --trust-remote-code \
+#   --tensor-parallel-size $TP
+# "
 CMD="
 vllm serve $MODEL \
   --trust-remote-code \
-  --tensor-parallel-size $TP
+  --tensor-parallel-size $TP \
+  --no-enable-prefix-caching \
+  --kv_cache_dtype fp8
 "
 
 {

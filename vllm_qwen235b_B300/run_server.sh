@@ -6,12 +6,12 @@ enable_output_gemm=0
 
 # MODEL="/shared/amdgpu/home/share/Qwen/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969"
 MODEL="/data/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
-server_log_dir="/dockerx/vllm_qwen235b/logs_0122_kunlun_sla_random_noep_no-enable-prefix-caching"
+server_log_dir="/workdir/data/vllm_qwen235b/logs_0202_kunlun_sla_random_ep_no-enable-prefix-caching"
 
 ## case
-input_len=3300
+input_len=18000
 output_len=400
-concurrency=130
+concurrency=37
 PORT=8000
 # ========================
 
@@ -78,24 +78,27 @@ fi
 profiler_args=""
 if [ "$enable_profiler" = "1" ]; then
     export VLLM_TORCH_PROFILER_WITH_STACK=1
-    export VLLM_TORCH_PROFILER_RECORD_SHAPES=1  
-    profiler_dir="${server_log_dir}/qwen3_235b_a22b_instrct_2507_FP8_TP${TP}_isl${input_len}_osl${output_len}_conc${concurrency}_infrrate"
+    export VLLM_TORCH_PROFILER_RECORD_SHAPES=1
+    export VLLM_PROFILER_DELAY_ITERS=10
+    export VLLM_PROFILER_MAX_ITERS=10
+    # export VLLM_TORCH_PROFILER_DISABLE_ASYNC_LLM=1
+    profiler_dir="${server_log_dir}/qwen3_235b_a22b_instrct_2507_FP8_TP${TP}_isl${input_len}_osl${output_len}_conc${concurrency}_infrrate_delay10_it10_eager"
     export VLLM_TORCH_PROFILER_DIR="${profiler_dir}"
     mkdir -p $profiler_dir
-    # profiler_args=" --enforce-eager"
+    profiler_args=" --enforce-eager"
 fi
 
 rm -rf /root/.cache/vllm/torch_compile_cache/
 
 ## TP+EP (for tp8)
-# CMD="
-# python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --enable-expert-parallel --no-enable-prefix-caching $profiler_args
-# "
+CMD="
+python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --enable-expert-parallel --no-enable-prefix-caching $profiler_args
+"
 
 ## TP only (for others)
-CMD="
-python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --no-enable-prefix-caching $profiler_args
-"
+# CMD="
+# python -m vllm.entrypoints.openai.api_server --port $PORT --model $MODEL -tp $TP --kv_cache_dtype fp8 --no-enable-prefix-caching $profiler_args
+# "
 
 {
     echo "Running command: $CMD"

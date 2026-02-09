@@ -11,7 +11,7 @@ MODEL="/data/huggingface/hub/models--deepseek-ai--DeepSeek-R1-0528/snapshots/423
 # Port
 PORT=8000
 # Directory for storing client logs
-client_log_dir="/dockerx/vllm_deepseekr1/logs_test"
+client_log_dir="/workdir/data/vllm_deepseekr1/logs_0202_kunlun_random_noep_no-enable-prefix-caching_fp8"
 log_tag="results"
 # ========================================
 
@@ -41,11 +41,11 @@ export HF_OFFLINE=1
 # ================= Test Parameter Combinations =================
 # Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
 INPUT_OUTPUT_COMBOS=(
-  "800 1000 1600 2000 160"
-  "3000 3600 300 500 68"
-  "3600 4400 1800 2200 88"
-  "11000 15000 2500 2900 36"
-   "16000 20000 300 500 24"
+#   "800 1000 1600 2000 290"
+#   "3000 3600 300 500 105"
+#   "3600 4400 1800 2200 164"
+#   "11000 15000 2500 2900 39"
+   "16000 20000 300 500 23"
 )
 
 # ================= Main Loop =================
