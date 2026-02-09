@@ -74,10 +74,10 @@ wget https://sinian-metrics-platform.oss-cn-hangzhou.aliyuncs.com/ai_perf/pack/k
 
 tar -zxvf kunlun-benchmark.tar.gz
 
-### error on 24.04 ?
-https://sinian-metrics-platform.oss-cn-hangzhou.aliyuncs.com/home/shizhiguo/scripts/kunlun-benchmark
-替換kunlun-benchmark
-chmod +x /opt/kunlun-benchmark/kunlun-benchmark
+### error on 24.04
+替換kunlun-benchmark  
+https://sinian-metrics-platform.oss-cn-hangzhou.aliyuncs.com/home/shizhiguo/scripts/kunlun-benchmark  
+chmod +x /opt/kunlun-benchmark/kunlun-benchmark  
 
 ## Install requirements
 pip install loguru jsonlines prettytable oss2
