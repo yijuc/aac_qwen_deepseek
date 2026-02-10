@@ -1,24 +1,42 @@
 #!/bin/bash
 # ====== Setting Profiler switch =====
-enable_profiler=0
-
+enable_profiler=${enable_profiler:-0}
+kunlun_is_random=${kunlun_is_random:-1}
+kunlun_use_sla=${kunlun_use_sla:-False}
 # ====== Setting TP, Model path, Kunlun-benchmark directory, Port, log directory =====
 # TP: only used for metadata/filename, will follow the actual server setting
-TP=4
-KUNLUN_DIR="/opt/kunlun-benchmark"
-# Model path configuration
-# MODEL="/mnt/nfs/RAID/shared/huggingface/hub/models--Qwen--Qwen3-235B-A22B-Instruct-2507-FP8/snapshots/e156cb4efae43fbee1a1ab073f946a1377e6b969/"
-MODEL="/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"
-# Port
-PORT=8000
-# Directory for storing client logs
-client_log_dir="/workdir/eveline/atom_qwen235b/logs_kunlun_qwen_202601200319_max-model-len_16384_max-num-batched-tokens_20k"
+TP=${TP:-4}
+KUNLUN_DIR=${KUNLUN_DIR:-"/opt/kunlun-benchmark"} # Kunlun benchmark tool
+MODEL=${MODEL:-"/dev/shm/Qwen3-235B-A22B-Instruct-2507-FP8/"} # Model path configuration
+PORT=${PORT:-8000} # Port
+CLIENT_LOG_DIR=${CLIENT_LOG_DIR:-"/dockerx/eveline/atom_qwen235b/logs_0209_2060323_max-model-len_16384_max-num-batched-tokens_20k"}
+log_tag=${log_tag:-"results"}
+# ================= Test Parameter Combinations =================
+# Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
+if [ $# -eq 5 ]; then
+    echo "Using arguments passed from Master script."
+    MIN_INPUT=$1
+    MAX_INPUT=$2
+    MIN_OUTPUT=$3
+    MAX_OUTPUT=$4
+    CONC=$5
+    INPUT_OUTPUT_COMBOS=("$MIN_INPUT $MAX_INPUT $MIN_OUTPUT $MAX_OUTPUT $CONC")
+else
+    echo "No arguments detected, using internal TEST_CASES."
+    INPUT_OUTPUT_COMBOS=(
+      "800 1000 1600 2000 512"
+    #   "3000 3600 300 500 125"
+    #   "3600 4400 1800 2200 257"
+    #   "11000 15000 2500 2900 1"
+    #   "16000 20000 300 500 26"
+    )
+fi
 # ========================================
 
-mkdir -p ${client_log_dir}
+mkdir -p ${CLIENT_LOG_DIR}
 # Define result file names (Defaults to benchmark_tpX_results.log/csv if not provided as arguments)
-log_file=${1:-"benchmark_tp${TP}_results.log"}
-csv_file=${2:-"benchmark_tp${TP}_results.csv"}
+log_file=${log_file:-"benchmark_tp${TP}_${log_tag}.log"}
+csv_file=${csv_file:-"benchmark_tp${TP}_${log_tag}.csv"}
 
 # Prefix filenames if profiler is enabled
 if [ "$enable_profiler" = "1" ]; then
@@ -26,26 +44,16 @@ if [ "$enable_profiler" = "1" ]; then
     csv_file="profiler_${csv_file}"
 fi
 
-log_file="${client_log_dir}/${log_file}"
-csv_file="${client_log_dir}/${csv_file}"
+log_file="${CLIENT_LOG_DIR}/${log_file}"
+csv_file="${CLIENT_LOG_DIR}/${csv_file}"
 
 # Initialize CSV header if file does not exist
 if [ ! -f "${csv_file}" ]; then
     echo "TimeStamp,MIN_Input,MAX_Input,MIN_Output,MAX_Output,Num_Prompts,Generate_Token_Throughput,Total_Token_Throughput,Request_throughput_req_s,Concurrency,Mean_TTFT_ms,Mean_TPOT_ms" > "${csv_file}"
 fi
 
-unset HF_OFFLINE KUNLUN_RANDOM
 export HF_OFFLINE=1
-export KUNLUN_RANDOM=0
-# ================= Test Parameter Combinations =================
-# Format: "MIN_INPUT MAX_INPUT MIN_OUTPUT MAX_OUTPUT CONC"
-INPUT_OUTPUT_COMBOS=(
-#   "800 1000 1600 2000 512"
-#   "3000 3600 300 500 125"
-#   "3600 4400 1800 2200 257"
-  "11000 15000 2500 2900 1"
-#    "16000 20000 300 500 26" # tp4, tp8 failed
-)
+export KUNLUN_RANDOM=$kunlun_is_random
 
 # ================= Main Loop =================
 for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
@@ -56,7 +64,7 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     num_prompts=$((CONC * 4))
 
     timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
-    LOG_FILE="${client_log_dir}/benchmark_${timestamp// /_}.log"
+    LOG_FILE="${CLIENT_LOG_DIR}/benchmark_${timestamp// /_}.log"
     temp_output=$(mktemp) # Create a temporary file for data extraction
 
     # 2. Display start message
@@ -86,9 +94,9 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
         --min_output_len $MIN_OUTPUT \
         --concurrency ${CONC} \
         --query_num ${num_prompts} \
-        --result_dir $client_log_dir \
+        --result_dir $CLIENT_LOG_DIR \
         --model_path $MODEL \
-        --is_sla False \
+        --is_sla ${kunlun_use_sla} \
         --sla_decode 50 \
         --sla_prefill 3000 \
         --tp $TP \
@@ -107,13 +115,13 @@ for COMBO in "${INPUT_OUTPUT_COMBOS[@]}"; do
     echo "Searching for pattern: ${FILE_PATTERN}"
 
     # Search the latest json can match pattern
-    LATEST_JSON=$(ls -t ${client_log_dir}/${FILE_PATTERN} 2>/dev/null | head -n 1)
+    LATEST_JSON=$(ls -t ${CLIENT_LOG_DIR}/${FILE_PATTERN} 2>/dev/null | head -n 1)
 
     if [ -z "$LATEST_JSON" ] || [ ! -f "$LATEST_JSON" ]; then
         echo "Error: Could not find JSON file matching current parameters."
         echo "Expected Pattern: ${FILE_PATTERN}"
         # Fallback: If cannot match match, use latest json file.
-        LATEST_JSON=$(ls -t ${client_log_dir}/*.json 2>/dev/null | head -n 1)
+        LATEST_JSON=$(ls -t ${CLIENT_LOG_DIR}/*.json 2>/dev/null | head -n 1)
         echo "Using fallback (latest overall JSON): $LATEST_JSON"
     else
         echo "Successfully matched JSON: $(basename "$LATEST_JSON")"

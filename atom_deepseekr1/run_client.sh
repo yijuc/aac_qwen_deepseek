@@ -2,7 +2,7 @@
 # ====== Setting TP, Profiler switch =====
 TP=8  # or TP=4
 enable_profiler=0
-client_log_dir="/workdir/eveline/atom_deepseekr1/logs_dsr1_atom_12241340_test"
+client_log_dir="/dockerx/eveline/atom_deepseekr1/logs_0206_night202601200319_max-num-batched-tokens_20k"
 MODEL="/dev/shm/DeepSeek-R1-0528"
 
 # ========================
@@ -30,7 +30,7 @@ fi
 
 PORT=8000
 configs=(
-    "1024 1024 4"
+    # "1024 1024 4"
     # "1024 1024 8"
     # "1024 1024 16"
     # "1024 1024 32"
@@ -41,6 +41,7 @@ configs=(
     # "10240 1024 32"
     # "10240 1024 64"
     # "10240 1024 128"
+    "18000 400 28"
 )
 
 for config in "${configs[@]}"; do
@@ -67,7 +68,8 @@ for config in "${configs[@]}"; do
     
     temp_output=$(mktemp)
     # python /root/bench_serving/benchmark_serving.py \
-    PYTHONPATH=/ATOM/atom python -m benchmarks.benchmark_serving \
+    # PYTHONPATH=/app/ATOM/atom python -m benchmarks.benchmark_serving \
+    PYTHONPATH=/app/ATOM/atom python -m benchmarks.benchmark_serving \
     --model=$MODEL --backend=vllm --base-url=http://localhost:$PORT \
     --dataset-name=random \
     --random-input-len=${ISL} --random-output-len=${OSL} \

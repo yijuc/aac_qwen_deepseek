@@ -76,7 +76,7 @@ export VLLM_USE_TRITON_FLASH_ATTN=1
 ## New env frop tp4 (20260205)
 unset VLLM_ROCM_SHUFFLE_KV_CACHE_LAYOUT VLLM_ROCM_QUICK_REDUCE_QUANTIZATION VLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB
 export VLLM_ROCM_SHUFFLE_KV_CACHE_LAYOUT=1
-# export VLLM_ROCM_USE_AITER_MHA=1
+export VLLM_ROCM_USE_AITER_MHA=1
 export VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4
 export VLLM_ROCM_QUICK_REDUCE_MAX_SIZE_BYTES_MB=2048
 
@@ -104,34 +104,16 @@ rm -rf /root/.cache/vllm/torch_compile_cache/
 
 
 ## smaller
-CMD="
-vllm serve ${MODEL} \
-    --port 8000 \
-    --swap-space 64 \
-    --tensor-parallel-size $TP \
-    --kv_cache_dtype fp8 \
-    --max-num-seqs 256 \
-    --no-enable-prefix-caching \
-    --max-num-batched-tokens 65536 \
-    --max-model-len 16384 \
-    --block-size 1 \
-    --gpu-memory-utilization 0.95 \
-    --async-scheduling \
-    --dtype auto \
-    --disable_log_requests \
-    --trust_remote_code \
-    --distributed_executor_backend mp \
-    $profiler_args 
-"
-
-# ## no max args (for kunlun 11k, 16k)
 # CMD="
 # vllm serve ${MODEL} \
 #     --port 8000 \
 #     --swap-space 64 \
 #     --tensor-parallel-size $TP \
 #     --kv_cache_dtype fp8 \
+#     --max-num-seqs 256 \
 #     --no-enable-prefix-caching \
+#     --max-num-batched-tokens 65536 \
+#     --max-model-len 16384 \
 #     --block-size 1 \
 #     --gpu-memory-utilization 0.95 \
 #     --async-scheduling \
@@ -141,6 +123,24 @@ vllm serve ${MODEL} \
 #     --distributed_executor_backend mp \
 #     $profiler_args 
 # "
+
+# ## no max args (for kunlun 11k, 16k)
+CMD="
+vllm serve ${MODEL} \
+    --port 8000 \
+    --swap-space 64 \
+    --tensor-parallel-size $TP \
+    --kv_cache_dtype fp8 \
+    --no-enable-prefix-caching \
+    --block-size 1 \
+    --gpu-memory-utilization 0.95 \
+    --async-scheduling \
+    --dtype auto \
+    --disable_log_requests \
+    --trust_remote_code \
+    --distributed_executor_backend mp \
+    $profiler_args 
+"
 
 {
     echo "Running command: $CMD"

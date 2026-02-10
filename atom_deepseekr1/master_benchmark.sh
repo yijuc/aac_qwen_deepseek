@@ -3,10 +3,10 @@ export enable_profiler=0
 export kunlun_is_random=1
 export kunlun_use_sla=True
 
-export TP=8
-export MODEL="/dev/shm/DeepSeek-R1-0528"
+export TP=4
 export PORT=8000
-export SERVER_LOG_DIR="/dockerx/eveline/vllm_deepseekr1/logs_0206_night0205_kunlun_sla_random_nomax_silo/"
+export MODEL="/dev/shm/DeepSeek-R1-0528"
+export SERVER_LOG_DIR="/workdir/eveline/atom_deepseekr1/logs_kunlun_dsr1_atom_12241340"
 export CLIENT_LOG_DIR="$SERVER_LOG_DIR"
 
 TEST_CASES=(
@@ -63,20 +63,17 @@ except:
         sleep 15
         RETRY_COUNT=$((RETRY_COUNT + 1))
         # 額外補刀：每等一次就殺一次進程
-        pkill -9 -f vllm
+        pkill -9 -f atom
     done
     return 1
 }
 
 # --- main ---
 for CASE in "${TEST_CASES[@]}"; do
-    
-    pkill -9 -f vllm
-    pkill -9 -f "vllm.entrypoints.openai.api_server"
-    pkill -9 -f "api_server"
-    pkill -9 -f "EngineCore"
-    pkill -9 -f "WorkerProc"
-    pkill -9 -f "multiprocessing.spawn"    
+    echo "Deep cleaning before case: $CASE"
+    pkill -9 -f atom
+    pkill -9 -f "atom.entrypoints.openai_server"
+    pkill -9 -f "multiprocessing.spawn" 
     sleep 5
 
     wait_for_gpu_clear
@@ -112,11 +109,8 @@ for CASE in "${TEST_CASES[@]}"; do
     # 結束後清理
     echo "Round finished. Starting deep cleanup..."
     kill $SERVER_PID 2>/dev/null
-    pkill -9 -f vllm
-    pkill -9 -f "vllm.entrypoints.openai.api_server"
-    pkill -9 -f "api_server"
-    pkill -9 -f "EngineCore"
-    pkill -9 -f "WorkerProc"
-    pkill -9 -f "multiprocessing.spawn"
+    pkill -9 -f atom
     sleep 20
 done
+
+echo "All Atom benchmarks completed. Logs at $SERVER_LOG_DIR"
